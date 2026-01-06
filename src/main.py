@@ -16,7 +16,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, QThread, Signal
 from PySide6.QtGui import QFont, QColor, QTextCharFormat, QTextCursor, QAction, QIcon
-from search_engine import SearchEngine, SearchMatch
+from .search_engine import SearchEngine, SearchMatch
 
 
 class PreferencesDialog(QDialog):
