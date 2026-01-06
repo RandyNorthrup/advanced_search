@@ -5,6 +5,8 @@ import sys
 import os
 import re
 import json
+import string
+import subprocess
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QTreeWidget, QTreeWidgetItem, QTextEdit, QLineEdit,
@@ -419,7 +421,6 @@ class MainWindow(QMainWindow):
         
         # Add drives (Windows)
         if os.name == 'nt':
-            import string
             for drive in string.ascii_uppercase:
                 drive_path = f"{drive}:\\\\"
                 if os.path.exists(drive_path):
@@ -955,7 +956,6 @@ class MainWindow(QMainWindow):
     
     def open_file(self, file_path, line_number=None):
         """Open file in default editor"""
-        import subprocess
         try:
             if line_number:
                 # Try to open with VS Code if available
