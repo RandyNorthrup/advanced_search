@@ -138,6 +138,20 @@ class MainWindow(QMainWindow):
         self.max_file_size = self.preferences['max_preview_file_size_mb'] * 1024 * 1024
         self.parsed_extensions = []  # Cached parsed extensions
         
+        # Regex pattern options
+        self.regex_patterns = {
+            'emails': {'pattern': r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', 'enabled': False, 'label': 'Email addresses'},
+            'urls': {'pattern': r'https?://[^\s]+', 'enabled': False, 'label': 'URLs (http/https)'},
+            'ipv4': {'pattern': r'\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b', 'enabled': False, 'label': 'IPv4 addresses'},
+            'phone': {'pattern': r'\b(?:\+?1[-.]?)?(?:\(?[0-9]{3}\)?[-.]?)?[0-9]{3}[-.]?[0-9]{4}\b', 'enabled': False, 'label': 'Phone numbers'},
+            'dates': {'pattern': r'\b\d{1,4}[-/.]\d{1,2}[-/.]\d{1,4}\b', 'enabled': False, 'label': 'Dates (various formats)'},
+            'numbers': {'pattern': r'\b\d+\b', 'enabled': False, 'label': 'Numbers'},
+            'hex': {'pattern': r'\b0x[0-9A-Fa-f]+\b|#[0-9A-Fa-f]{6}\b', 'enabled': False, 'label': 'Hex values'},
+            'words': {'pattern': r'\b[A-Za-z_]\w*\b', 'enabled': False, 'label': 'Words/identifiers'},
+        }
+        self.regex_menu = None  # Track the menu instance
+        self.regex_menu_open = False  # Track menu state
+        
         # Apply preferences to search engine
         self.search_engine.max_results = self.preferences['max_results']
         self.search_engine.max_search_file_size = self.preferences['max_search_file_size_mb'] * 1024 * 1024
@@ -361,12 +375,17 @@ class MainWindow(QMainWindow):
         )
         layout.addWidget(self.case_sensitive_cb)
         
-        self.regex_cb = QCheckBox("Use regex")
-        self.regex_cb.setToolTip("Enable regular expression pattern matching\nExample: \\d+ matches numbers, \\w+ matches words")
-        self.regex_cb.stateChanged.connect(
-            lambda state: self.search_engine.set_regex(state == Qt.Checked)
-        )
-        layout.addWidget(self.regex_cb)
+        # Regex pattern selector button
+        assets_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets")
+        chevron_icon_path = os.path.join(assets_dir, "chevron_down.svg")
+        self.regex_btn = QPushButton("Regex Patterns")
+        if os.path.exists(chevron_icon_path):
+            self.regex_btn.setIcon(QIcon(chevron_icon_path))
+            self.regex_btn.setLayoutDirection(Qt.RightToLeft)  # Icon on the right
+        self.regex_btn.setToolTip("Select common regex patterns to search for")
+        self.regex_btn.setMaximumWidth(150)
+        self.regex_btn.clicked.connect(self.show_regex_patterns_menu)
+        layout.addWidget(self.regex_btn)
         
         self.whole_word_cb = QCheckBox("Whole word")
         self.whole_word_cb.setToolTip("Only match complete words (not partial matches)")
@@ -375,20 +394,22 @@ class MainWindow(QMainWindow):
         )
         layout.addWidget(self.whole_word_cb)
         
-        # Context lines
+        # Context lines dropdown
         context_label = QLabel("Context:")
         context_label.setToolTip("Number of lines to show before and after each match")
         layout.addWidget(context_label)
         
-        self.context_spin = QSpinBox()
-        self.context_spin.setRange(0, 10)
-        self.context_spin.setValue(2)
-        self.context_spin.setToolTip("Lines of context to show around matches (0-10)")
-        self.context_spin.valueChanged.connect(
-            lambda value: self.search_engine.set_context_lines(value)
+        self.context_combo = QComboBox()
+        for i in range(11):  # 0 to 10
+            self.context_combo.addItem(str(i))
+        self.context_combo.setCurrentIndex(2)  # Default to 2
+        self.context_combo.setToolTip("Lines of context to show around matches (0-10)")
+        self.context_combo.currentIndexChanged.connect(
+            lambda index: self.search_engine.set_context_lines(index)
         )
-        self.context_spin.setMaximumWidth(60)
-        layout.addWidget(self.context_spin)
+        self.context_combo.setMinimumWidth(50)
+        self.context_combo.setMaximumWidth(70)
+        layout.addWidget(self.context_combo)
         
         # File extensions filter
         ext_label = QLabel("Extensions:")
@@ -481,6 +502,92 @@ class MainWindow(QMainWindow):
                 self.status_bar.showMessage(f"Selected file: {path}")
             else:
                 self.status_bar.showMessage(f"Selected directory: {path}")
+    
+    def show_regex_patterns_menu(self):
+        """Show or hide popup menu with regex pattern options"""
+        # If menu exists and is visible, close it and prevent reopening
+        if self.regex_menu is not None and self.regex_menu.isVisible():
+            self.regex_menu.close()
+            self.regex_menu_open = False
+            return
+        
+        # If we just closed the menu, don't reopen immediately
+        if self.regex_menu_open:
+            return
+        
+        # Mark menu as opening
+        self.regex_menu_open = True
+        
+        # Create new menu
+        self.regex_menu = QMenu(self)
+        self.regex_menu.setToolTipsVisible(True)
+        
+        # Add header
+        header_action = self.regex_menu.addAction("Select Regex Patterns:")
+        header_action.setEnabled(False)
+        self.regex_menu.addSeparator()
+        
+        # Add checkbox for each pattern
+        for pattern_key, pattern_info in self.regex_patterns.items():
+            action = self.regex_menu.addAction(pattern_info['label'])
+            action.setCheckable(True)
+            action.setChecked(pattern_info['enabled'])
+            action.setToolTip(f"Pattern: {pattern_info['pattern']}")
+            action.triggered.connect(lambda checked, key=pattern_key: self.toggle_regex_pattern(key, checked))
+        
+        self.regex_menu.addSeparator()
+        
+        # Add clear all option
+        clear_action = self.regex_menu.addAction("Clear All")
+        clear_action.triggered.connect(self.clear_all_regex_patterns)
+        
+        # Clean up when menu is hidden/closed
+        def on_menu_hidden():
+            # Use a timer to delay the flag reset to avoid immediate reopening
+            from PySide6.QtCore import QTimer
+            QTimer.singleShot(200, lambda: setattr(self, 'regex_menu_open', False))
+        
+        self.regex_menu.aboutToHide.connect(on_menu_hidden)
+        
+        # Show menu below button using popup (non-blocking)
+        self.regex_menu.popup(self.regex_btn.mapToGlobal(self.regex_btn.rect().bottomLeft()))
+    
+    def toggle_regex_pattern(self, pattern_key, enabled):
+        """Toggle a regex pattern on/off"""
+        self.regex_patterns[pattern_key]['enabled'] = enabled
+        self.update_search_with_regex_patterns()
+        
+        # Update button text to show active patterns count
+        active_count = sum(1 for p in self.regex_patterns.values() if p['enabled'])
+        if active_count > 0:
+            self.regex_btn.setText(f"Regex Patterns ({active_count})")
+            self.regex_btn.setStyleSheet("font-weight: bold;")
+        else:
+            self.regex_btn.setText("Regex Patterns")
+            self.regex_btn.setStyleSheet("")
+    
+    def clear_all_regex_patterns(self):
+        """Clear all selected regex patterns"""
+        for pattern_info in self.regex_patterns.values():
+            pattern_info['enabled'] = False
+        self.update_search_with_regex_patterns()
+        self.regex_btn.setText("Regex Patterns")
+        self.regex_btn.setStyleSheet("")
+    
+    def update_search_with_regex_patterns(self):
+        """Update search input with combined regex patterns"""
+        enabled_patterns = [info['pattern'] for info in self.regex_patterns.values() if info['enabled']]
+        
+        if enabled_patterns:
+            # Combine patterns with OR operator
+            combined_pattern = '|'.join(f'({pattern})' for pattern in enabled_patterns)
+            self.search_input.lineEdit().setText(combined_pattern)
+            # Enable regex mode in search engine
+            self.search_engine.set_regex(True)
+        else:
+            # If no patterns selected, keep current search text
+            # and disable regex mode
+            self.search_engine.set_regex(False)
     
     def show_dir_context_menu(self, position):
         """Show context menu for directory tree items"""
@@ -984,7 +1091,7 @@ class MainWindow(QMainWindow):
             self,
             "About Advanced Search Tool",
             "<h3>Advanced Search Tool</h3>"
-            "<p>Version 0.1.0-alpha</p>"
+            "<p>Version 0.2.0-alpha</p>"
             "<p>Author: Randy Northrup</p>"
             "<p>A Windows GUI application for grep-style searching with file browser interface.</p>"
             "<p><b>Features:</b></p>"
