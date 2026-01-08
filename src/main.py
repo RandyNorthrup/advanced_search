@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (
     QPushButton, QTreeWidget, QTreeWidgetItem, QTextEdit, QLineEdit,
     QSplitter, QLabel, QCheckBox, QSpinBox,
     QProgressBar, QStatusBar, QMessageBox, QMenu, QComboBox,
-    QDialog, QFormLayout, QDialogButtonBox
+    QDialog, QFormLayout, QDialogButtonBox, QTabWidget
 )
 from PySide6.QtCore import Qt, QThread, Signal
 from PySide6.QtGui import QFont, QColor, QTextCharFormat, QTextCursor, QAction, QIcon
@@ -85,6 +85,515 @@ class PreferencesDialog(QDialog):
         }
 
 
+class HelpDialog(QDialog):
+    """Comprehensive help dialog window"""
+    
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.setWindowTitle("Help - Advanced Search Tool")
+        self.setModal(False)
+        
+        # Create layout
+        layout = QVBoxLayout()
+        
+        # Create tab widget for different help sections
+        tabs = QTabWidget()
+        
+        # Overview tab
+        overview_text = QTextEdit()
+        overview_text.setReadOnly(True)
+        overview_text.setHtml("""
+        <h2>Advanced Search Tool - Overview</h2>
+        <p>A powerful grep-style search application for Windows with advanced features including regex patterns, 
+        metadata search, and result sorting.</p>
+        
+        <h3>Quick Start</h3>
+        <ol>
+            <li>Select a directory or file in the <b>File Explorer</b> (left panel)</li>
+            <li>Enter your search pattern in the search box</li>
+            <li>Configure search options (case sensitive, regex, whole word, etc.)</li>
+            <li>Click <b>Search</b> or press <b>Enter</b></li>
+            <li>View results in the middle panel, preview on the right</li>
+        </ol>
+        
+        <h3>Three-Panel Layout</h3>
+        <ul>
+            <li><b>Left Panel:</b> File Explorer - Navigate directories and select search locations</li>
+            <li><b>Middle Panel:</b> Results Tree - Shows files with matches and match counts</li>
+            <li><b>Right Panel:</b> Preview Pane - Displays file content with highlighted matches</li>
+        </ul>
+        """)
+        tabs.addTab(overview_text, "Overview")
+        
+        # Search Options tab
+        options_text = QTextEdit()
+        options_text.setReadOnly(True)
+        options_text.setHtml("""
+        <h2>Search Options</h2>
+        
+        <h3>Basic Options</h3>
+        <table border="1" cellpadding="5" cellspacing="0">
+            <tr><th>Option</th><th>Description</th></tr>
+            <tr><td><b>Case Sensitive</b></td><td>Match exact letter case (A ≠ a)</td></tr>
+            <tr><td><b>Use Regex</b></td><td>Enable regular expression pattern matching</td></tr>
+            <tr><td><b>Whole Word</b></td><td>Only match complete words, not partial matches</td></tr>
+            <tr><td><b>Context Lines</b></td><td>Show 0-10 lines before/after each match</td></tr>
+            <tr><td><b>File Extensions</b></td><td>Filter by file types (e.g., .py,.txt,.js)</td></tr>
+        </table>
+        
+        <h3>Metadata Search</h3>
+        <p><b>Search Image Metadata:</b> Search EXIF, GPS, and PNG metadata in JPG, PNG, TIFF, GIF, BMP, WebP files</p>
+        <p><b>Search File Metadata:</b> Search properties in documents, audio, video, archives, and structured data:</p>
+        <ul>
+            <li><b>Documents:</b> PDF, Word, Excel, PowerPoint, OpenDocument, eBooks, RTF</li>
+            <li><b>Screenwriting:</b> Final Draft (.fdx), Fountain (.fountain), Celtx (.celtx)</li>
+            <li><b>Archives:</b> ZIP, EPUB</li>
+            <li><b>Structured Data:</b> CSV, JSON, XML</li>
+            <li><b>Databases:</b> SQLite (.db, .sqlite, .sqlite3) - schema and table info</li>
+            <li><b>Media:</b> Audio (MP3, FLAC, M4A, OGG, WMA) and Video (MP4, AVI, MKV, MOV, WMV)</li>
+        </ul>
+        <p><b>Note:</b> When metadata search is enabled, ONLY metadata is searched, not file contents.</p>
+        
+        <h3>Advanced Search Modes</h3>
+        <table border="1" cellpadding="5" cellspacing="0">
+            <tr><th>Mode</th><th>Description</th></tr>
+            <tr><td><b>Search in Archives</b></td><td>Search inside ZIP and EPUB files without extraction. Results show as "archive.zip/internal/path.txt"</td></tr>
+            <tr><td><b>Binary/Hex Search</b></td><td>Search binary files for hex patterns. Results show byte offsets and hex dumps</td></tr>
+        </table>
+        
+        <h3>Result Sorting</h3>
+        <p>Use the Sort dropdown to organize results by:</p>
+        <ul>
+            <li>Path (A-Z or Z-A)</li>
+            <li>Match Count (High-Low or Low-High)</li>
+            <li>File Size (Large-Small or Small-Large)</li>
+            <li>Date Modified (Newest or Oldest)</li>
+        </ul>
+        """)
+        tabs.addTab(options_text, "Search Options")
+        
+        # Regex Patterns tab
+        regex_text = QTextEdit()
+        regex_text.setReadOnly(True)
+        regex_text.setHtml("""
+        <h2>Regex Patterns</h2>
+        
+        <h3>Using the Regex Patterns Menu</h3>
+        <p>Click the <b>"Regex Patterns ▼"</b> button to access common regex patterns:</p>
+        <ol>
+            <li>Click the button to open the patterns menu</li>
+            <li>Check one or more patterns to enable them</li>
+            <li>The search box will update with the combined pattern</li>
+            <li>Uncheck patterns or click "Clear All" to reset</li>
+        </ol>
+        
+        <h3>Available Patterns</h3>
+        <table border="1" cellpadding="5" cellspacing="0" width="100%">
+            <tr><th>Pattern</th><th>Description</th><th>Example Matches</th></tr>
+            <tr><td><b>Email Addresses</b></td><td>Standard email format</td><td>user@example.com</td></tr>
+            <tr><td><b>URLs</b></td><td>HTTP/HTTPS web addresses</td><td>https://example.com</td></tr>
+            <tr><td><b>IPv4 Addresses</b></td><td>IP addresses</td><td>192.168.1.1</td></tr>
+            <tr><td><b>Phone Numbers</b></td><td>Various phone formats</td><td>(555) 123-4567</td></tr>
+            <tr><td><b>Dates</b></td><td>Various date formats</td><td>2024-01-15, 01/15/2024</td></tr>
+            <tr><td><b>Numbers</b></td><td>Integer numbers</td><td>123, 4567</td></tr>
+            <tr><td><b>Hex Values</b></td><td>Hexadecimal notation</td><td>0xFF, #A3B5C7</td></tr>
+            <tr><td><b>Words/Identifiers</b></td><td>Programming identifiers</td><td>variable_name, camelCase</td></tr>
+        </table>
+        
+        <h3>Custom Regex</h3>
+        <p>Enable <b>"Use Regex"</b> checkbox and enter your own regular expression patterns.</p>
+        <p><b>Common Regex Syntax:</b></p>
+        <ul>
+            <li><b>.</b> - Any character</li>
+            <li><b>*</b> - Zero or more of previous</li>
+            <li><b>+</b> - One or more of previous</li>
+            <li><b>?</b> - Zero or one of previous</li>
+            <li><b>[abc]</b> - Any of a, b, or c</li>
+            <li><b>[a-z]</b> - Any lowercase letter</li>
+            <li><b>\\d</b> - Any digit</li>
+            <li><b>\\w</b> - Any word character</li>
+            <li><b>^</b> - Start of line</li>
+            <li><b>$</b> - End of line</li>
+        </ul>
+        """)
+        tabs.addTab(regex_text, "Regex Patterns")
+        
+        # Keyboard Shortcuts tab
+        shortcuts_text = QTextEdit()
+        shortcuts_text.setReadOnly(True)
+        shortcuts_text.setHtml("""
+        <h2>Keyboard Shortcuts</h2>
+        
+        <h3>Search & Navigation</h3>
+        <table border="1" cellpadding="5" cellspacing="0">
+            <tr><th>Shortcut</th><th>Action</th></tr>
+            <tr><td><b>Enter</b></td><td>Start search (when in search box)</td></tr>
+            <tr><td><b>Ctrl+Up</b></td><td>Go to previous match in preview</td></tr>
+            <tr><td><b>Ctrl+Down</b></td><td>Go to next match in preview</td></tr>
+        </table>
+        
+        <h3>Application</h3>
+        <table border="1" cellpadding="5" cellspacing="0">
+            <tr><th>Shortcut</th><th>Action</th></tr>
+            <tr><td><b>Ctrl+Q</b></td><td>Quit application</td></tr>
+        </table>
+        
+        <h3>Mouse Actions</h3>
+        <table border="1" cellpadding="5" cellspacing="0">
+            <tr><th>Action</th><th>Result</th></tr>
+            <tr><td><b>Single Click</b> on result</td><td>Show preview in right panel</td></tr>
+            <tr><td><b>Double Click</b> on result</td><td>Open file in default application</td></tr>
+            <tr><td><b>Right Click</b> on result</td><td>Show context menu with options</td></tr>
+            <tr><td><b>Right Click</b> on directory</td><td>Show directory context menu</td></tr>
+        </table>
+        """)
+        tabs.addTab(shortcuts_text, "Shortcuts")
+        
+        # Context Menu tab
+        context_text = QTextEdit()
+        context_text.setReadOnly(True)
+        context_text.setHtml("""
+        <h2>Context Menus</h2>
+        
+        <h3>Results Tree Context Menu</h3>
+        <p>Right-click on any result to access:</p>
+        <ul>
+            <li><b>Open File</b> - Open in default application</li>
+            <li><b>Open in VS Code</b> - Open in Visual Studio Code (if installed)</li>
+            <li><b>Copy Full Path</b> - Copy file path to clipboard</li>
+            <li><b>Copy File Name</b> - Copy just the file name</li>
+            <li><b>Open Containing Folder</b> - Open folder in Windows Explorer</li>
+        </ul>
+        
+        <h3>Directory Tree Context Menu</h3>
+        <p>Right-click on a directory to:</p>
+        <ul>
+            <li><b>Search in Directory</b> - Set as search location</li>
+            <li><b>Open in Explorer</b> - Open in Windows Explorer</li>
+            <li><b>Copy Path</b> - Copy directory path to clipboard</li>
+            <li><b>Refresh</b> - Reload directory contents</li>
+        </ul>
+        """)
+        tabs.addTab(context_text, "Context Menus")
+        
+        # Tips & Tricks tab
+        tips_text = QTextEdit()
+        tips_text.setReadOnly(True)
+        tips_text.setHtml("""
+        <h2>Tips & Tricks</h2>
+        
+        <h3>Performance Tips</h3>
+        <ul>
+            <li><b>Use file extensions filter</b> to limit search scope (.py,.txt,.js)</li>
+            <li><b>Adjust max file size</b> in Preferences for faster searches</li>
+            <li><b>Enable metadata search only when needed</b> - it adds processing time</li>
+            <li><b>Use specific patterns</b> instead of broad searches</li>
+            <li><b>Sort by match count</b> to find files with most occurrences first</li>
+        </ul>
+        
+        <h3>Search Strategies</h3>
+        <ul>
+            <li><b>Start broad, then refine</b> - Do a general search, then add filters</li>
+            <li><b>Use whole word</b> to avoid partial matches in variable names</li>
+            <li><b>Combine regex patterns</b> to find multiple items at once</li>
+            <li><b>Search metadata</b> to find files by author, date, or properties</li>
+            <li><b>Use context lines</b> to see surrounding code/text</li>
+        </ul>
+        
+        <h3>Metadata Search Examples</h3>
+        <ul>
+            <li><b>Find photos by camera:</b> Enable image metadata, search "Canon" or "Nikon"</li>
+            <li><b>Find documents by author:</b> Enable file metadata, search author name</li>
+            <li><b>Find geotagged images:</b> Enable image metadata, search "GPS"</li>
+            <li><b>Find audio by artist:</b> Enable file metadata, search artist name</li>
+            <li><b>Find screenplays by title:</b> Enable file metadata, search in .fdx or .fountain files</li>
+        </ul>
+        
+        <h3>Working with Results</h3>
+        <ul>
+            <li><b>Use Previous/Next buttons</b> to navigate between matches in preview</li>
+            <li><b>Match counter shows</b> current position (e.g., "3 / 15")</li>
+            <li><b>Matches are highlighted</b> - yellow for all, orange for current</li>
+            <li><b>Search history</b> provides autocomplete from previous searches</li>
+            <li><b>Results persist</b> until next search - you can explore freely</li>
+        </ul>
+        
+        <h3>File Browser Tips</h3>
+        <ul>
+            <li><b>Directories load on demand</b> - expand folders to see contents</li>
+            <li><b>Search in specific file</b> - click a file instead of a folder</li>
+            <li><b>Refresh directory</b> - right-click for latest contents</li>
+            <li><b>Drive letters shown</b> - start from any drive on Windows</li>
+        </ul>
+        """)
+        tabs.addTab(tips_text, "Tips & Tricks")
+        
+        # Troubleshooting tab
+        trouble_text = QTextEdit()
+        trouble_text.setReadOnly(True)
+        trouble_text.setHtml("""
+        <h2>Troubleshooting</h2>
+        
+        <h3>Common Issues</h3>
+        
+        <h4>Q: Search is slow or hangs</h4>
+        <ul>
+            <li>Reduce <b>Max Search File Size</b> in Preferences</li>
+            <li>Add file extension filters to limit scope</li>
+            <li>Disable metadata search if not needed</li>
+            <li>Search in smaller directories first</li>
+            <li>Click <b>Stop</b> to cancel long-running searches</li>
+        </ul>
+        
+        <h4>Q: No results found</h4>
+        <ul>
+            <li>Check <b>Case Sensitive</b> option - try disabling it</li>
+            <li>Verify file extension filter isn't excluding target files</li>
+            <li>Make sure you're searching in the right directory</li>
+            <li>If using regex, verify pattern syntax is correct</li>
+            <li>Check if metadata search is enabled when searching content</li>
+        </ul>
+        
+        <h4>Q: Preview shows garbled text</h4>
+        <ul>
+            <li>File may have different encoding (UTF-8, ASCII, etc.)</li>
+            <li>Binary files won't display properly in text preview</li>
+            <li>Very large files may be truncated</li>
+            <li>Increase <b>Max Preview File Size</b> in Preferences if needed</li>
+        </ul>
+        
+        <h4>Q: Metadata search not working</h4>
+        <ul>
+            <li>Ensure the file type is supported (see Search Options tab)</li>
+            <li>Not all files contain metadata - depends on creation method</li>
+            <li>Required library must be installed (Pillow, PyPDF2, etc.)</li>
+            <li>Some formats require specific libraries</li>
+        </ul>
+        
+        <h4>Q: Can't open file in VS Code</h4>
+        <ul>
+            <li>Visual Studio Code must be installed</li>
+            <li>VS Code must be in system PATH</li>
+            <li>Try "Open File" to use default application instead</li>
+        </ul>
+        
+        <h3>Performance Notes</h3>
+        <ul>
+            <li><b>File cache</b> speeds up repeated access to same files</li>
+            <li><b>Background threading</b> prevents UI freezing during search</li>
+            <li><b>Max results limit</b> can be set in Preferences (0 = unlimited)</li>
+            <li><b>Excluded patterns</b> skip .git, node_modules, __pycache__, etc.</li>
+        </ul>
+        
+        <h3>Getting Help</h3>
+        <p>For additional support:</p>
+        <ul>
+            <li>Check the README.md file in the installation directory</li>
+            <li>Visit the project repository for issues and updates</li>
+            <li>Review CONTRIBUTING.md for development information</li>
+        </ul>
+        """)
+        tabs.addTab(trouble_text, "Troubleshooting")
+        
+        layout.addWidget(tabs)
+        
+        # Close button
+        close_btn = QPushButton("Close")
+        close_btn.clicked.connect(self.accept)
+        layout.addWidget(close_btn)
+        
+        self.setLayout(layout)
+        self.resize(800, 600)
+
+
+class CustomPatternManagerDialog(QDialog):
+    \"\"\"Dialog for managing custom regex patterns\"\"\"
+    
+    def __init__(self, parent, custom_patterns):
+        super().__init__(parent)
+        self.setWindowTitle(\"Manage Custom Regex Patterns\")
+        self.setModal(True)
+        self.custom_patterns = custom_patterns.copy()
+        
+        # Create layout
+        layout = QVBoxLayout()
+        
+        # Instructions
+        inst_label = QLabel(\"Add, edit, or remove your custom regex patterns:\")
+        layout.addWidget(inst_label)
+        
+        # List of patterns
+        self.pattern_list = QTreeWidget()
+        self.pattern_list.setHeaderLabels([\"Label\", \"Pattern\"])
+        self.pattern_list.setColumnWidth(0, 200)
+        self.pattern_list.setColumnWidth(1, 400)
+        self.refresh_pattern_list()
+        layout.addWidget(self.pattern_list)
+        
+        # Buttons
+        button_layout = QHBoxLayout()
+        
+        add_btn = QPushButton(\"Add Pattern\")
+        add_btn.clicked.connect(self.add_pattern)
+        button_layout.addWidget(add_btn)
+        
+        edit_btn = QPushButton(\"Edit Selected\")
+        edit_btn.clicked.connect(self.edit_pattern)
+        button_layout.addWidget(edit_btn)
+        
+        remove_btn = QPushButton(\"Remove Selected\")
+        remove_btn.clicked.connect(self.remove_pattern)
+        button_layout.addWidget(remove_btn)
+        
+        button_layout.addStretch()
+        layout.addLayout(button_layout)
+        
+        # Dialog buttons
+        dialog_buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        dialog_buttons.accepted.connect(self.accept)
+        dialog_buttons.rejected.connect(self.reject)
+        layout.addWidget(dialog_buttons)
+        
+        self.setLayout(layout)
+        self.resize(700, 400)
+    
+    def refresh_pattern_list(self):
+        \"\"\"Refresh the pattern list widget\"\"\"
+        self.pattern_list.clear()
+        for name, info in self.custom_patterns.items():
+            item = QTreeWidgetItem(self.pattern_list)
+            item.setText(0, info['label'])
+            item.setText(1, info['pattern'])
+            item.setData(0, Qt.UserRole, name)
+    
+    def add_pattern(self):
+        \"\"\"Add a new custom pattern\"\"\"
+        dialog = CustomPatternEditDialog(self, \"\", \"\", \"\")
+        if dialog.exec() == QDialog.Accepted:
+            name, label, pattern = dialog.get_pattern()
+            if name and label and pattern:
+                # Generate unique name
+                base_name = name.lower().replace(' ', '_')
+                unique_name = base_name
+                counter = 1
+                while unique_name in self.custom_patterns:
+                    unique_name = f\"{base_name}_{counter}\"
+                    counter += 1
+                
+                self.custom_patterns[unique_name] = {
+                    'pattern': pattern,
+                    'enabled': False,
+                    'label': label
+                }
+                self.refresh_pattern_list()
+    
+    def edit_pattern(self):
+        \"\"\"Edit the selected pattern\"\"\"
+        selected_items = self.pattern_list.selectedItems()
+        if not selected_items:
+            QMessageBox.warning(self, \"Warning\", \"Please select a pattern to edit\")
+            return
+        
+        item = selected_items[0]
+        name = item.data(0, Qt.UserRole)
+        info = self.custom_patterns[name]
+        
+        dialog = CustomPatternEditDialog(self, name, info['label'], info['pattern'])
+        if dialog.exec() == QDialog.Accepted:
+            _, label, pattern = dialog.get_pattern()
+            if label and pattern:
+                self.custom_patterns[name]['label'] = label
+                self.custom_patterns[name]['pattern'] = pattern
+                self.refresh_pattern_list()
+    
+    def remove_pattern(self):
+        \"\"\"Remove the selected pattern\"\"\"
+        selected_items = self.pattern_list.selectedItems()
+        if not selected_items:
+            QMessageBox.warning(self, \"Warning\", \"Please select a pattern to remove\")
+            return
+        
+        item = selected_items[0]
+        name = item.data(0, Qt.UserRole)
+        
+        reply = QMessageBox.question(
+            self,
+            \"Confirm Removal\",
+            f\"Remove pattern '{self.custom_patterns[name]['label']}'?\",
+            QMessageBox.Yes | QMessageBox.No
+        )
+        
+        if reply == QMessageBox.Yes:
+            del self.custom_patterns[name]
+            self.refresh_pattern_list()
+    
+    def get_custom_patterns(self):
+        \"\"\"Return the updated custom patterns\"\"\"
+        return self.custom_patterns
+
+
+class CustomPatternEditDialog(QDialog):
+    \"\"\"Dialog for editing a single custom pattern\"\"\"
+    
+    def __init__(self, parent, name, label, pattern):
+        super().__init__(parent)
+        self.setWindowTitle(\"Edit Custom Pattern\" if name else \"Add Custom Pattern\")
+        self.setModal(True)
+        
+        # Create layout
+        layout = QVBoxLayout()
+        form = QFormLayout()
+        
+        # Name field (only for new patterns)
+        if not name:
+            self.name_input = QLineEdit()
+            self.name_input.setPlaceholderText(\"e.g., my_pattern\")
+            form.addRow(\"Name:\", self.name_input)
+        else:
+            self.name_input = None
+        
+        # Label field
+        self.label_input = QLineEdit()
+        self.label_input.setText(label)
+        self.label_input.setPlaceholderText(\"e.g., My Custom Pattern\")
+        form.addRow(\"Label:\", self.label_input)
+        
+        # Pattern field
+        self.pattern_input = QLineEdit()
+        self.pattern_input.setText(pattern)
+        self.pattern_input.setPlaceholderText(r\"e.g., \\b[A-Z]{3}-\\d{4}\\b\")
+        form.addRow(\"Regex Pattern:\", self.pattern_input)
+        
+        layout.addLayout(form)
+        
+        # Example/help text
+        help_label = QLabel(
+            \"<small>Examples:<br>\" +
+            \"• <b>\\\\b[A-Z]{3}-\\\\d{4}\\\\b</b> - Match ABC-1234 format<br>\" +
+            \"• <b>TODO:|FIXME:</b> - Find code comments<br>\" +
+            \"• <b>\\\\$\\\\d+\\\\.\\\\d{2}</b> - Match currency amounts<br>\" +
+            \"</small>\"
+        )
+        help_label.setWordWrap(True)
+        layout.addWidget(help_label)
+        
+        # Buttons
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+        
+        self.setLayout(layout)
+        self.resize(500, 250)
+    
+    def get_pattern(self):
+        \"\"\"Return the pattern data (name, label, pattern)\"\"\"
+        name = self.name_input.text().strip() if self.name_input else \"\"
+        label = self.label_input.text().strip()
+        pattern = self.pattern_input.text().strip()
+        return name, label, pattern
+
+
 class SearchWorker(QThread):
     """Worker thread for performing searches"""
     finished = Signal(list)  # all results
@@ -126,6 +635,7 @@ class MainWindow(QMainWindow):
         self.search_history = []
         self.history_file = os.path.join(os.path.expanduser("~"), ".advanced_search_history.json")
         self.preferences_file = os.path.join(os.path.expanduser("~"), ".advanced_search_preferences.json")
+        self.custom_patterns_file = os.path.join(os.path.expanduser("~"), ".advanced_search_custom_patterns.json")
         
         # Default preferences
         self.preferences = {
@@ -155,6 +665,10 @@ class MainWindow(QMainWindow):
         }
         self.regex_menu = None  # Track the menu instance
         self.regex_menu_open = False  # Track menu state
+        
+        # Custom user-defined patterns
+        self.custom_patterns = {}  # {name: {'pattern': str, 'enabled': bool, 'label': str}}
+        self.load_custom_patterns()
         
         # Apply preferences to search engine
         self.search_engine.max_results = self.preferences['max_results']
@@ -353,6 +867,13 @@ class MainWindow(QMainWindow):
         # Help menu
         help_menu = menubar.addMenu("&Help")
         
+        help_action = QAction("Help...", self)
+        help_action.setShortcut("F1")
+        help_action.triggered.connect(self.show_help)
+        help_menu.addAction(help_action)
+        
+        help_menu.addSeparator()
+        
         about_action = QAction("About", self)
         about_action.triggered.connect(self.show_about)
         help_menu.addAction(about_action)
@@ -435,6 +956,20 @@ class MainWindow(QMainWindow):
             lambda state: self.search_engine.set_search_file_metadata(state == 2)
         )
         layout.addWidget(self.file_metadata_cb)
+        
+        self.archive_search_cb = QCheckBox("Search in archives")
+        self.archive_search_cb.setToolTip("Search inside ZIP and EPUB files without extraction")
+        self.archive_search_cb.stateChanged.connect(
+            lambda state: self.search_engine.set_search_in_archives(state == 2)
+        )
+        layout.addWidget(self.archive_search_cb)
+        
+        self.hex_search_cb = QCheckBox("Binary/hex search")
+        self.hex_search_cb.setToolTip("Search binary files using hex patterns")
+        self.hex_search_cb.stateChanged.connect(
+            lambda state: self.search_engine.set_hex_search(state == 2)
+        )
+        layout.addWidget(self.hex_search_cb)
         
         # Context lines dropdown
         context_label = QLabel("Context:")
@@ -577,6 +1112,25 @@ class MainWindow(QMainWindow):
             action.setToolTip(f"Pattern: {pattern_info['pattern']}")
             action.triggered.connect(lambda checked, key=pattern_key: self.toggle_regex_pattern(key, checked))
         
+        # Add custom patterns section if any exist
+        if self.custom_patterns:
+            self.regex_menu.addSeparator()
+            custom_header = self.regex_menu.addAction("Custom Patterns:")
+            custom_header.setEnabled(False)
+            
+            for pattern_key, pattern_info in self.custom_patterns.items():
+                action = self.regex_menu.addAction(pattern_info['label'])
+                action.setCheckable(True)
+                action.setChecked(pattern_info['enabled'])
+                action.setToolTip(f"Pattern: {pattern_info['pattern']}")
+                action.triggered.connect(lambda checked, key=pattern_key: self.toggle_custom_pattern(key, checked))
+        
+        self.regex_menu.addSeparator()
+        
+        # Add manage custom patterns option
+        manage_action = self.regex_menu.addAction("Manage Custom Patterns...")
+        manage_action.triggered.connect(self.show_custom_pattern_manager)
+        
         self.regex_menu.addSeparator()
         
         # Add clear all option
@@ -601,6 +1155,23 @@ class MainWindow(QMainWindow):
         
         # Update button text to show active patterns count
         active_count = sum(1 for p in self.regex_patterns.values() if p['enabled'])
+        active_count += sum(1 for p in self.custom_patterns.values() if p['enabled'])
+        if active_count > 0:
+            self.regex_btn.setText(f"Regex Patterns ({active_count})")
+            self.regex_btn.setStyleSheet("font-weight: bold;")
+        else:
+            self.regex_btn.setText("Regex Patterns")
+            self.regex_btn.setStyleSheet("")
+    
+    def toggle_custom_pattern(self, pattern_key, enabled):
+        """Toggle a custom regex pattern on/off"""
+        self.custom_patterns[pattern_key]['enabled'] = enabled
+        self.save_custom_patterns()
+        self.update_search_with_regex_patterns()
+        
+        # Update button text to show active patterns count
+        active_count = sum(1 for p in self.regex_patterns.values() if p['enabled'])
+        active_count += sum(1 for p in self.custom_patterns.values() if p['enabled'])
         if active_count > 0:
             self.regex_btn.setText(f"Regex Patterns ({active_count})")
             self.regex_btn.setStyleSheet("font-weight: bold;")
@@ -612,6 +1183,9 @@ class MainWindow(QMainWindow):
         """Clear all selected regex patterns"""
         for pattern_info in self.regex_patterns.values():
             pattern_info['enabled'] = False
+        for pattern_info in self.custom_patterns.values():
+            pattern_info['enabled'] = False
+        self.save_custom_patterns()
         self.update_search_with_regex_patterns()
         self.regex_btn.setText("Regex Patterns")
         self.regex_btn.setStyleSheet("")
@@ -619,6 +1193,7 @@ class MainWindow(QMainWindow):
     def update_search_with_regex_patterns(self):
         """Update search input with combined regex patterns"""
         enabled_patterns = [info['pattern'] for info in self.regex_patterns.values() if info['enabled']]
+        enabled_patterns += [info['pattern'] for info in self.custom_patterns.values() if info['enabled']]
         
         if enabled_patterns:
             # Combine patterns with OR operator
@@ -630,6 +1205,47 @@ class MainWindow(QMainWindow):
             # If no patterns selected, keep current search text
             # and disable regex mode
             self.search_engine.set_regex(False)
+    
+    def load_custom_patterns(self):
+        """Load custom user-defined regex patterns from file"""
+        try:
+            if os.path.exists(self.custom_patterns_file):
+                with open(self.custom_patterns_file, 'r', encoding='utf-8') as f:
+                    self.custom_patterns = json.load(f)
+        except Exception as e:
+            print(f"Error loading custom patterns: {e}")
+            self.custom_patterns = {}
+    
+    def save_custom_patterns(self):
+        """Save custom patterns to file"""
+        try:
+            with open(self.custom_patterns_file, 'w', encoding='utf-8') as f:
+                json.dump(self.custom_patterns, f, indent=2)
+        except Exception as e:
+            print(f"Error saving custom patterns: {e}")
+    
+    def add_custom_pattern(self, name, pattern, label):
+        """Add a new custom regex pattern"""
+        self.custom_patterns[name] = {
+            'pattern': pattern,
+            'enabled': False,
+            'label': label
+        }
+        self.save_custom_patterns()
+    
+    def remove_custom_pattern(self, name):
+        """Remove a custom regex pattern"""
+        if name in self.custom_patterns:
+            del self.custom_patterns[name]
+            self.save_custom_patterns()
+    
+    def show_custom_pattern_manager(self):
+        \"\"\"Show dialog to manage custom regex patterns\"\"\"
+        dialog = CustomPatternManagerDialog(self, self.custom_patterns)
+        if dialog.exec() == QDialog.Accepted:
+            self.custom_patterns = dialog.get_custom_patterns()
+            self.save_custom_patterns()
+            self.status_bar.showMessage(\"Custom patterns updated\", 3000)
     
     def show_dir_context_menu(self, position):
         """Show context menu for directory tree items"""
@@ -1307,13 +1923,18 @@ class MainWindow(QMainWindow):
         except Exception as e:
             QMessageBox.warning(self, "Warning", f"Could not open directory: {str(e)}")
     
+    def show_help(self):
+        """Show comprehensive help dialog"""
+        dialog = HelpDialog(self)
+        dialog.exec()
+    
     def show_about(self):
         """Show about dialog"""
         QMessageBox.about(
             self,
             "About Advanced Search Tool",
             "<h3>Advanced Search Tool</h3>"
-            "<p>Version 0.3.0-alpha</p>"
+            "<p>Version 0.4.0-alpha</p>"
             "<p>Author: Randy Northrup</p>"
             "<p>A Windows GUI application for grep-style searching with advanced regex patterns and metadata search.</p>"
             "<p><b>Key Features:</b></p>"

@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-0.4.0--alpha-blue)
+![Version](https://img.shields.io/badge/version-0.5.0--alpha-blue)
 ![Python](https://img.shields.io/badge/python-3.8+-green)
 ![License](https://img.shields.io/badge/license-MIT-orange)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey)
@@ -30,7 +30,7 @@ Advanced Search Tool is a modern, high-performance desktop application that brin
 
 ### Regex & Pattern Matching
 - 🔄 **Full Regex Support** - Complete regular expression pattern matching
-- 📋 **Regex Pattern Library** - Quick-access popover menu with 8 common regex patterns:
+- 📋 **Regex Pattern Library** - Quick-access popover menu with 8 built-in common regex patterns:
   - Email addresses (`user@domain.com`)
   - URLs (http/https)
   - IPv4 addresses
@@ -39,6 +39,7 @@ Advanced Search Tool is a modern, high-performance desktop application that brin
   - Numbers
   - Hex values (0x... and #...)
   - Words/identifiers
+- ✏️ **Custom Pattern Library** - Create, save, and manage your own regex patterns with persistent storage
 - ✅ **Pattern Auto-Apply** - Check patterns in menu to instantly apply to your search
 - 🔀 **Pattern Combination** - Enable multiple patterns simultaneously
 
@@ -50,11 +51,26 @@ Advanced Search Tool is a modern, high-performance desktop application that brin
   - Other formats: GIF, BMP, WebP
 - 📄 **File Metadata Search** - Extract and search properties from:
   - **PDF files**: Title, author, subject, keywords, creator, creation/modification dates
-  - **Word documents (.docx)**: Author, title, subject, keywords, creation/modification dates, paragraph count
-  - **Excel files (.xlsx)**: Creator, title, subject, sheet names, creation/modification dates
-  - **PowerPoint (.pptx)**: Similar metadata to Word documents
-  - **Audio files** (.mp3, .flac, .m4a): Artist, album, title, duration, bitrate, sample rate
-  - **Video files** (.mp4, .avi, .mkv): Video metadata and tags
+  - **Microsoft Office** (.docx, .xlsx, .pptx): Author, title, subject, keywords, creation/modification dates, document statistics
+  - **OpenDocument** (.odt, .ods, .odp): LibreOffice/OpenOffice metadata and properties
+  - **Screenwriting** (.fdx, .fountain, .celtx): Final Draft, Fountain format, Celtx projects - title, author, scenes
+  - **eBooks** (.epub): Title, author, publisher, language, ISBN from EPUB metadata
+  - **Archives** (.zip): File lists, compressed size, contents preview
+  - **Structured Data** (.csv, .json, .xml): Headers, keys, schema information
+  - **Databases** (.db, .sqlite, .sqlite3): SQLite database schema, table names, column info, row counts
+  - **RTF files** (.rtf): Rich Text Format documents - title, author, subject, RTF version
+  - **Audio files** (.mp3, .flac, .m4a, .ogg, .wma): Artist, album, title, duration, bitrate
+  - **Video files** (.mp4, .avi, .mkv, .mov, .wmv): Video metadata, codec info, duration
+
+### Advanced Search Modes
+- 📦 **Archive Content Search** - Search inside ZIP and EPUB files without manual extraction
+  - Results displayed as `archive.zip/internal/path/file.txt:line`
+  - Supports nested directory structures within archives
+  - Automatic text encoding detection
+- 🔢 **Binary/Hex Search** - Search binary files using hex patterns
+  - Results show byte offsets and hex dumps
+  - 32-byte context window (16 bytes before/after match)
+  - Useful for firmware, executables, and binary data analysis
 
 ### Performance Optimizations
 - ⚡ **Multi-threaded Search** - Background search operations don't freeze the UI
@@ -62,6 +78,7 @@ Advanced Search Tool is a modern, high-performance desktop application that brin
 - 📦 **Batch UI Updates** - Efficient result rendering
 - 🎚️ **Configurable Limits** - File size limits, max results, cache size
 - 🚀 **Smart File Filtering** - Automatic exclusion of binary files and common build directories
+- 🌐 **Network Drive Optimization** - Automatic UNC path detection with timeout handling and accessibility caching
 
 ### User Interface
 - 🎨 **Three-Panel Layout** - File Explorer | Results Tree | Preview Pane
@@ -109,6 +126,8 @@ The following libraries will be installed:
 | python-docx | ≥1.0.0 | Word document metadata |
 | openpyxl | ≥3.1.0 | Excel metadata |
 | mutagen | ≥1.47.0 | Audio/video file tags |
+
+**Note:** XML, JSON, CSV, and ZIP support use Python standard library (no extra dependencies)
 
 ## 📖 Usage
 
@@ -168,19 +187,41 @@ Enable **"Search image metadata"** checkbox to search within image files:
 Enable **"Search file metadata"** checkbox to search document properties:
 
 **PDF Files:**
-- Title, Author, Subject, Keywords
-- Creator application, Producer
-- Creation date, Modification date
+- Title, Author, Subject, Keywords, Creator, Producer
+- Creation date, Modification date, Page count
 
-**Office Documents (.docx, .xlsx, .pptx):**
-- Creator, Title, Subject, Keywords
+**Microsoft Office (.docx, .xlsx, .pptx):**
+- Creator, Title, Subject, Keywords, Category
 - Creation date, Modified date
-- Document statistics (paragraph count, sheet names)
+- Document statistics (paragraphs, sheets, etc.)
 
-**Audio/Video Files (.mp3, .flac, .m4a, .mp4, .avi, .mkv):**
-- Artist, Album, Title
+**OpenDocument (.odt, .ods, .odp):**
+- Title, Creator, Subject, Keywords
+- LibreOffice/OpenOffice metadata
+
+**Screenwriting Files:**
+- **Final Draft (.fdx)**: Title, author, scene count, script metadata
+- **Fountain (.fountain)**: Title page metadata, scene headings count
+- **Celtx (.celtx)**: Project type, file count
+
+**eBooks (.epub):**
+- Title, Author, Publisher, Language, ISBN
+
+**Archives (.zip):**
+- File count, compressed size, contents listing
+
+**Structured Data:**
+- **CSV**: Column headers, row count
+- **JSON**: Keys, structure type, item count
+- **XML**: Root tag, namespaces, attributes
+
+**Audio Files (.mp3, .flac, .m4a, .ogg, .wma):**
+- Artist, Album, Title, Genre, Year
 - Duration, Bitrate, Sample rate
-- Video codec information
+
+**Video Files (.mp4, .avi, .mkv, .mov, .wmv):**
+- Title, Artist, Album, Genre
+- Duration, Bitrate, Video codec
 
 **Note:** When metadata search is enabled, the tool searches ONLY metadata, not file contents. Disable to search file text content.
 
@@ -227,8 +268,8 @@ advanced_search/
 │   ├── chevron_up.svg  # Up arrow icon
 │   └── chevron_down.svg # Down arrow icon
 ├── src/                 # Source code
-│   ├── main.py         # Main application & GUI (1,400 lines)
-│   ├── search_engine.py # Core search functionality (422 lines)
+│   ├── main.py         # Main application & GUI (2,024 lines)
+│   ├── search_engine.py # Core search functionality (830 lines)
 │   └── __pycache__/    # Python bytecode cache
 ├── main.py             # Application entry point
 ├── requirements.txt    # Python dependencies
@@ -324,12 +365,50 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Potential Future Features:**
 - [ ] Linux and macOS support
-- [ ] Custom regex pattern library
-- [ ] Integration with more file formats
-- [ ] Binary file content search (hex mode)
-- [ ] Network drive search optimization
+- [x] Custom regex pattern library (save your own patterns) - ✅ **Completed in v0.5.0**
+- [x] Search inside archive files without extraction - ✅ **Completed in v0.5.0**
+- [x] Binary file content search (hex mode) - ✅ **Completed in v0.5.0**
+- [x] Network drive search optimization - ✅ **Completed in v0.5.0**
+- [x] SQLite database content search - ✅ **Completed in v0.5.0**
+- [x] RTF (Rich Text Format) support - ✅ **Completed in v0.5.0**
 
-## 👤 Author
+## � Changelog
+
+### v0.5.0-alpha (Latest)
+**Major Feature Release**
+
+New Features:
+- ✏️ **Custom Regex Pattern Library** - Create, save, and manage your own regex patterns with persistent storage
+- 📦 **Archive Content Search** - Search inside ZIP and EPUB files without manual extraction
+- 🔢 **Binary/Hex Search Mode** - Search binary files using hex patterns with offset display
+- 🗄️ **SQLite Database Search** - Extract schema, table names, column info, and row counts from SQLite databases
+- 📄 **RTF File Support** - Extract metadata from Rich Text Format documents
+- 🌐 **Network Drive Optimization** - Automatic UNC path detection with timeout handling and accessibility caching
+
+Improvements:
+- Enhanced help documentation with 6-tab comprehensive guide
+- Added support for .db, .sqlite, .sqlite3, and .rtf file formats
+- Improved performance for network drive operations
+- Added custom pattern editor with validation
+
+### v0.4.0-alpha
+**Sorting & Organization Update**
+
+New Features:
+- 📊 **Result Sorting** - Sort results by path, match count, file size, or modification date (8 options)
+- 📚 **Comprehensive Help System** - 6-tab help window (Overview, Search Options, Regex, Shortcuts, Context Menus, Tips)
+- 🎬 **Screenwriting Format Support** - Added Final Draft (.fdx), Fountain (.fountain), and Celtx (.celtx)
+- 📦 **Archive Metadata** - Extract file lists and metadata from ZIP archives
+- 📖 **eBook Support** - EPUB metadata extraction (title, author, publisher)
+- 📊 **Structured Data** - CSV, JSON, and XML metadata extraction
+- 📝 **OpenDocument Support** - LibreOffice/OpenOffice formats (.odt, .ods, .odp)
+
+Improvements:
+- Expanded metadata search to 20+ file formats
+- Updated UI with F1 help shortcut
+- Enhanced documentation
+
+## �👤 Author
 
 **Randy Northrup**
 
