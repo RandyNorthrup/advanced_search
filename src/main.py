@@ -216,10 +216,34 @@ class MainWindow(QMainWindow):
         results_layout = QVBoxLayout(results_widget)
         results_layout.setContentsMargins(0, 0, 0, 0)
         
+        # Results header with sort controls
+        results_header = QHBoxLayout()
         results_label = QLabel("Search Results:")
         results_label.setStyleSheet("font-weight: bold; padding: 5px;")
         results_label.setToolTip("Files and matches found in search")
-        results_layout.addWidget(results_label)
+        results_header.addWidget(results_label)
+        
+        results_header.addStretch()
+        
+        # Sort dropdown
+        sort_label = QLabel("Sort:")
+        results_header.addWidget(sort_label)
+        self.sort_combo = QComboBox()
+        self.sort_combo.addItems([
+            "Path (A-Z)",
+            "Path (Z-A)",
+            "Match Count (High-Low)",
+            "Match Count (Low-High)",
+            "File Size (Large-Small)",
+            "File Size (Small-Large)",
+            "Date Modified (Newest)",
+            "Date Modified (Oldest)"
+        ])
+        self.sort_combo.setToolTip("Sort search results")
+        self.sort_combo.currentIndexChanged.connect(self.apply_sort)
+        results_header.addWidget(self.sort_combo)
+        
+        results_layout.addLayout(results_header)
         
         self.results_tree = QTreeWidget()
         self.results_tree.setHeaderLabels(["File", "Matches"])
@@ -688,6 +712,69 @@ class MainWindow(QMainWindow):
             
             self.status_bar.showMessage("Preferences updated", 3000)
     
+    def apply_sort(self):
+        """Apply sorting to current search results"""
+        if not self.current_results:
+            return
+        
+        # Group results by file
+        files_dict = {}
+        for match in self.current_results:
+            if match.file_path not in files_dict:
+                files_dict[match.file_path] = []
+            files_dict[match.file_path].append(match)
+        
+        # Apply sorting
+        sort_option = self.sort_combo.currentText()
+        
+        if sort_option == "Path (A-Z)":
+            sorted_files = sorted(files_dict.items(), key=lambda x: x[0].lower())
+        elif sort_option == "Path (Z-A)":
+            sorted_files = sorted(files_dict.items(), key=lambda x: x[0].lower(), reverse=True)
+        elif sort_option == "Match Count (High-Low)":
+            sorted_files = sorted(files_dict.items(), key=lambda x: len(x[1]), reverse=True)
+        elif sort_option == "Match Count (Low-High)":
+            sorted_files = sorted(files_dict.items(), key=lambda x: len(x[1]))
+        elif sort_option == "File Size (Large-Small)":
+            sorted_files = sorted(files_dict.items(), 
+                                key=lambda x: os.path.getsize(x[0]) if os.path.exists(x[0]) else 0, 
+                                reverse=True)
+        elif sort_option == "File Size (Small-Large)":
+            sorted_files = sorted(files_dict.items(), 
+                                key=lambda x: os.path.getsize(x[0]) if os.path.exists(x[0]) else 0)
+        elif sort_option == "Date Modified (Newest)":
+            sorted_files = sorted(files_dict.items(), 
+                                key=lambda x: os.path.getmtime(x[0]) if os.path.exists(x[0]) else 0, 
+                                reverse=True)
+        elif sort_option == "Date Modified (Oldest)":
+            sorted_files = sorted(files_dict.items(), 
+                                key=lambda x: os.path.getmtime(x[0]) if os.path.exists(x[0]) else 0)
+        else:
+            sorted_files = sorted(files_dict.items(), key=lambda x: x[0].lower())
+        
+        # Update the results tree
+        self.results_tree.clear()
+        
+        for file_path, matches in sorted_files:
+            file_item = QTreeWidgetItem(self.results_tree)
+            file_item.setText(0, file_path)
+            file_item.setText(1, str(len(matches)))
+            file_item.setData(0, Qt.UserRole, matches)
+            
+            # Add match items
+            for match in matches:
+                match_item = QTreeWidgetItem(file_item)
+                match_item.setText(0, f"  Line {match.line_number}: {match.line_content[:80]}")
+                match_item.setData(0, Qt.UserRole, match)
+        
+        # Update status
+        total_matches = sum(len(matches) for _, matches in sorted_files)
+        total_files = len(sorted_files)
+        
+        self.status_bar.showMessage(
+            f"Found {total_matches} matches in {total_files} files"
+        )
+    
     def start_search(self):
         """Start a new search"""
         pattern = self.search_input.currentText()
@@ -742,37 +829,13 @@ class MainWindow(QMainWindow):
         """Handle search completion"""
         self.current_results = results
         
-        # Group results by file
-        files_dict = {}
-        for match in results:
-            if match.file_path not in files_dict:
-                files_dict[match.file_path] = []
-            files_dict[match.file_path].append(match)
+        # Apply sorting to display results
+        self.apply_sort()
         
-        # Populate tree
-        for file_path, matches in sorted(files_dict.items()):
-            file_item = QTreeWidgetItem(self.results_tree)
-            file_item.setText(0, file_path)
-            file_item.setText(1, str(len(matches)))
-            file_item.setData(0, Qt.UserRole, matches)
-            
-            # Add match items
-            for match in matches:
-                match_item = QTreeWidgetItem(file_item)
-                match_item.setText(0, f"  Line {match.line_number}: {match.line_content[:80]}")
-                match_item.setData(0, Qt.UserRole, match)
-                self.results_tree.setUpdatesEnabled(True)  # Re-enable updates
-                # Update UI state
+        # Update UI state
         self.search_btn.setEnabled(True)
         self.stop_btn.setEnabled(False)
         self.progress_bar.setVisible(False)
-        
-        # Update status
-        total_matches = len(results)
-        total_files = len(files_dict)
-        self.status_bar.showMessage(
-            f"Found {total_matches} matches in {total_files} files"
-        )
     
     def on_tree_item_clicked(self, item, column):
         """Handle tree item click"""

@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-0.3.0--alpha-blue)
+![Version](https://img.shields.io/badge/version-0.4.0--alpha-blue)
 ![Python](https://img.shields.io/badge/python-3.8+-green)
 ![License](https://img.shields.io/badge/license-MIT-orange)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey)
@@ -23,6 +23,7 @@ Advanced Search Tool is a modern, high-performance desktop application that brin
 
 ### Core Functionality
 - 🔍 **Powerful Search Engine** - Fast grep-style pattern matching across files and directories
+- 📊 **Smart Sorting** - Sort results by path, match count, file size, or modification date (8 sorting options)
 - 🎯 **Smart Highlighting** - Yellow highlights for all matches, orange for current match
 - 📁 **File Browser** - Integrated file explorer with lazy loading for smooth navigation
 - 📊 **Results Tree** - Organized results grouped by file with match counts and line numbers
@@ -187,6 +188,7 @@ Enable **"Search file metadata"** checkbox to search document properties:
 
 | Action | Method |
 |--------|--------|
+| **Sort results** | Use Sort dropdown: Path, Match Count, File Size, Date Modified |
 | **Navigate matches** | Use Previous/Next buttons or `Ctrl+Up`/`Ctrl+Down` |
 | **Open file** | Double-click result in results tree |
 | **Open in VS Code** | Right-click → "Open in VS Code" (if installed) |
@@ -225,7 +227,7 @@ advanced_search/
 │   ├── chevron_up.svg  # Up arrow icon
 │   └── chevron_down.svg # Down arrow icon
 ├── src/                 # Source code
-│   ├── main.py         # Main application & GUI (1,346 lines)
+│   ├── main.py         # Main application & GUI (1,400 lines)
 │   ├── search_engine.py # Core search functionality (422 lines)
 │   └── __pycache__/    # Python bytecode cache
 ├── main.py             # Application entry point
@@ -322,10 +324,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Potential Future Features:**
 - [ ] Linux and macOS support
-- [ ] Export search results to CSV/JSON
-- [ ] Search result filtering and sorting options
 - [ ] Custom regex pattern library
-- [ ] Color themes and UI customization
 - [ ] Integration with more file formats
 - [ ] Binary file content search (hex mode)
 - [ ] Network drive search optimization
