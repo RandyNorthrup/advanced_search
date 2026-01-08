@@ -2,14 +2,14 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-0.2.0--alpha-blue)
+![Version](https://img.shields.io/badge/version-0.3.0--alpha-blue)
 ![Python](https://img.shields.io/badge/python-3.8+-green)
 ![License](https://img.shields.io/badge/license-MIT-orange)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey)
 
-**A powerful Windows GUI application for grep-style searching with an intuitive file browser interface**
+**A powerful Windows GUI application for grep-style searching with advanced regex patterns and metadata search capabilities**
 
-[Features](#features) • [Installation](#installation) • [Usage](#usage) • [Screenshots](#screenshots) • [Contributing](#contributing)
+[Features](#features) • [Installation](#installation) • [Usage](#usage) • [Metadata Search](#metadata-search) • [Contributing](#contributing)
 
 </div>
 
@@ -17,56 +17,73 @@
 
 ## 📋 Overview
 
-Advanced Search Tool is a modern, high-performance desktop application that brings the power of grep-style pattern searching to Windows users with a beautiful, easy-to-use graphical interface. Search through thousands of files quickly, navigate results effortlessly, and open files directly from the app.
+Advanced Search Tool is a modern, high-performance desktop application that brings the power of grep-style pattern searching to Windows users with a beautiful, easy-to-use graphical interface. Search through file contents, image metadata (EXIF/GPS), and document properties (PDF, Office, audio/video files) with powerful regex pattern matching.
 
 ## ✨ Features
 
 ### Core Functionality
 - 🔍 **Powerful Search Engine** - Fast grep-style pattern matching across files and directories
-- 🔄 **Regex Support** - Full regular expression support for complex pattern matching
-- 📁 **File Browser** - Integrated file explorer with lazy loading for smooth navigation
 - 🎯 **Smart Highlighting** - Yellow highlights for all matches, orange for current match
-- 📊 **Results Tree** - Organized results grouped by file with match counts
+- 📁 **File Browser** - Integrated file explorer with lazy loading for smooth navigation
+- 📊 **Results Tree** - Organized results grouped by file with match counts and line numbers
 
-### Advanced Capabilities
-- ⚡ **Performance Optimized** 
-  - Multi-threaded search engine
-  - File content caching (LRU eviction)
-  - Batch UI updates
-  - Configurable file size limits
-- 🎨 **Modern UI**
-  - Fluent Design icons
-  - Three-panel layout (Explorer | Results | Preview)
-  - Responsive interface with progress indicators
-- 🔧 **Flexible Options**
-  - Case-sensitive search
-  - Whole word matching
-  - Configurable context lines
-  - File extension filtering
-- 💾 **Persistent Settings**
-  - Search history with auto-complete
-  - User preferences (file size limits, cache size, max results)
-  - Session state preservation
+### Regex & Pattern Matching
+- 🔄 **Full Regex Support** - Complete regular expression pattern matching
+- 📋 **Regex Pattern Library** - Quick-access popover menu with 8 common regex patterns:
+  - Email addresses (`user@domain.com`)
+  - URLs (http/https)
+  - IPv4 addresses
+  - Phone numbers (multiple formats)
+  - Dates (various formats)
+  - Numbers
+  - Hex values (0x... and #...)
+  - Words/identifiers
+- ✅ **Pattern Auto-Apply** - Check patterns in menu to instantly apply to your search
+- 🔀 **Pattern Combination** - Enable multiple patterns simultaneously
 
-### Navigation & Workflow
-- ⬆️⬇️ **Match Navigation** - Cycle through matches with keyboard shortcuts or buttons
-- 🖱️ **Context Menus** - Right-click for quick actions (open, copy path, etc.)
-- 📂 **Direct File Access** - Double-click to open files in default editor
-- 🔗 **VS Code Integration** - Opens files at specific line numbers if VS Code is installed
+### Metadata Search
+- 🖼️ **Image Metadata Search** - Extract and search EXIF, GPS, and PNG metadata from:
+  - JPG/JPEG files (EXIF tags, GPS coordinates, camera info)
+  - PNG files (text chunks, creation time)
+  - TIFF files (comprehensive EXIF data)
+  - Other formats: GIF, BMP, WebP
+- 📄 **File Metadata Search** - Extract and search properties from:
+  - **PDF files**: Title, author, subject, keywords, creator, creation/modification dates
+  - **Word documents (.docx)**: Author, title, subject, keywords, creation/modification dates, paragraph count
+  - **Excel files (.xlsx)**: Creator, title, subject, sheet names, creation/modification dates
+  - **PowerPoint (.pptx)**: Similar metadata to Word documents
+  - **Audio files** (.mp3, .flac, .m4a): Artist, album, title, duration, bitrate, sample rate
+  - **Video files** (.mp4, .avi, .mkv): Video metadata and tags
+
+### Performance Optimizations
+- ⚡ **Multi-threaded Search** - Background search operations don't freeze the UI
+- 💾 **File Content Caching** - LRU cache for frequently accessed files
+- 📦 **Batch UI Updates** - Efficient result rendering
+- 🎚️ **Configurable Limits** - File size limits, max results, cache size
+- 🚀 **Smart File Filtering** - Automatic exclusion of binary files and common build directories
+
+### User Interface
+- 🎨 **Three-Panel Layout** - File Explorer | Results Tree | Preview Pane
+- 🎭 **Modern Design** - Clean, responsive interface with SVG icons
+- 📊 **Progress Indicators** - Real-time search progress with file count and status
+- 🔽 **Context Dropdown** - Select 0-10 lines of context around matches
+- ⌨️ **Keyboard Shortcuts** - Quick navigation and actions
+
+### Persistence & Configuration
+- 💾 **Search History** - Auto-complete from previous searches
+- ⚙️ **User Preferences** - Customizable settings saved between sessions
+- 📁 **Session State** - Remembers last directory and search options
+- 🔧 **Flexible Options** - Case sensitivity, whole word, file extensions, context lines
 
 ## 🚀 Installation
 
-### Option 1: Download Executable (Recommended)
-1. Download the latest `AdvancedSearch.exe` from [Releases](../../releases)
-2. Run the executable - no installation required!
+### Prerequisites
+- **Python 3.8 or higher**
+- **Windows OS** (tested on Windows 10/11)
+- **Git** (for cloning the repository)
 
-### Option 2: Run from Source
+### Quick Start
 
-**Requirements:**
-- Python 3.8 or higher
-- Windows OS
-
-**Steps:**
 ```bash
 # Clone the repository
 git clone https://github.com/yourusername/advanced_search.git
@@ -79,24 +96,102 @@ pip install -r requirements.txt
 python main.py
 ```
 
+### Dependencies
+
+The following libraries will be installed:
+
+| Library | Version | Purpose |
+|---------|---------|---------|
+| PySide6 | ≥6.6.0 | Qt6 GUI framework |
+| Pillow | ≥10.0.0 | Image metadata (EXIF, GPS) |
+| PyPDF2 | ≥3.0.0 | PDF metadata extraction |
+| python-docx | ≥1.0.0 | Word document metadata |
+| openpyxl | ≥3.1.0 | Excel metadata |
+| mutagen | ≥1.47.0 | Audio/video file tags |
+
 ## 📖 Usage
 
-### Quick Start
+### Basic Search
+
 1. **Select Directory** - Click on a folder in the left panel (File Explorer)
-2. **Enter Pattern** - Type your search term in the search box
-3. **Configure Options** - Set case sensitivity, regex mode, file extensions, etc.
-4. **Search** - Click "Search" or press Enter
-5. **Browse Results** - Click on results to preview, double-click to open files
+2. **Enter Pattern** - Type your search term in the search box at the top
+3. **Configure Options** - Enable case sensitivity, regex mode, whole word, etc.
+4. **Set Context** - Use dropdown to select 0-10 lines of context around matches
+5. **Search** - Click "Search" button or press Enter
+6. **Browse Results** - Click results in middle panel to preview, double-click to open
+
+### Using Regex Patterns
+
+Click the **"Regex Patterns ▼"** button to open a menu with common regex patterns:
+
+- ✓ **Check patterns** to enable them in your search
+- ✅ **Combine multiple patterns** by checking several boxes
+- 🗑️ **Clear all patterns** using the "Clear All" option at the bottom
+- 🔄 The menu toggles open/close on each click
+
+**Example**: Enable "Email addresses" to find all email addresses in your files without writing regex manually.
 
 ### Search Options
 
-| Option | Description |
-|--------|-------------|
-| **Case Sensitive** | Match exact case |
-| **Use Regex** | Enable regular expression patterns |
-| **Whole Word** | Match complete words only |
-| **Context** | Lines of context to show (0-10) |
-| **Extensions** | Filter by file extensions (e.g., `.py,.txt,.js`) |
+| Option | Description | Default |
+|--------|-------------|---------|
+| **Case Sensitive** | Match exact letter case | Off |
+| **Use Regex** | Enable regular expression patterns | Off |
+| **Whole Word** | Match complete words only (not partial) | Off |
+| **Context** | Lines of context to show around matches | 2 |
+| **Extensions** | Filter by file types (e.g., `.py,.txt,.js`) | All files |
+| **Search image metadata** | Search EXIF/GPS in JPG, PNG, TIFF, etc. | Off |
+| **Search file metadata** | Search properties in PDF, Office, audio/video | Off |
+
+### Metadata Search
+
+#### Image Metadata Search
+
+Enable **"Search image metadata"** checkbox to search within image files:
+
+**What it searches:**
+- EXIF tags (camera model, settings, software)
+- GPS coordinates (latitude, longitude, altitude)
+- PNG text chunks (creation time, software)
+- File system metadata (creation date, modified date, size)
+
+**Supported formats:** JPG, JPEG, PNG, TIFF, TIF, GIF, BMP, WebP
+
+**Example searches:**
+- Camera model: Search for "Canon" to find all Canon photos
+- Location: Search for "GPS" to find geotagged images
+- Date: Search for "2024" in DateTime tags
+
+#### File Metadata Search
+
+Enable **"Search file metadata"** checkbox to search document properties:
+
+**PDF Files:**
+- Title, Author, Subject, Keywords
+- Creator application, Producer
+- Creation date, Modification date
+
+**Office Documents (.docx, .xlsx, .pptx):**
+- Creator, Title, Subject, Keywords
+- Creation date, Modified date
+- Document statistics (paragraph count, sheet names)
+
+**Audio/Video Files (.mp3, .flac, .m4a, .mp4, .avi, .mkv):**
+- Artist, Album, Title
+- Duration, Bitrate, Sample rate
+- Video codec information
+
+**Note:** When metadata search is enabled, the tool searches ONLY metadata, not file contents. Disable to search file text content.
+
+### Navigation & Workflow
+
+| Action | Method |
+|--------|--------|
+| **Navigate matches** | Use Previous/Next buttons or `Ctrl+Up`/`Ctrl+Down` |
+| **Open file** | Double-click result in results tree |
+| **Open in VS Code** | Right-click → "Open in VS Code" (if installed) |
+| **Copy file path** | Right-click → "Copy Full Path" |
+| **View in explorer** | Right-click → "Open Containing Folder" |
 
 ### Keyboard Shortcuts
 
@@ -109,57 +204,103 @@ python main.py
 
 ### Preferences
 
-Access preferences via **Settings → Preferences** to configure:
-- **Max Search Results** - Limit total results (0 = unlimited)
-- **Max Preview File Size** - Maximum file size to display (MB)
-- **Max Search File Size** - Maximum file size to search (MB)
-- **File Cache Size** - Number of files to cache in memory
+Access preferences via **Menu → Preferences** to configure:
 
-## 📸 Screenshots
+| Setting | Description | Default |
+|---------|-------------|---------|
+| **Max Search Results** | Limit total results (0 = unlimited) | 0 (unlimited) |
+| **Max Preview File Size** | Maximum file size to display in preview pane (MB) | 10 MB |
+| **Max Search File Size** | Maximum file size to search through (MB) | 50 MB |
+| **File Cache Size** | Number of files to keep in memory cache | 50 files |
 
-*Screenshots coming soon*
+**Note:** All preferences are saved automatically and persist between sessions.
 
 ## 🏗️ Architecture
 
 ```
 advanced_search/
 ├── assets/              # Icons and images
-│   ├── icon.svg
-│   ├── chevron_up.svg
-│   └── chevron_down.svg
+│   ├── icon.ico        # Application icon (Windows)
+│   ├── icon.svg        # SVG version of icon
+│   ├── chevron_up.svg  # Up arrow icon
+│   └── chevron_down.svg # Down arrow icon
 ├── src/                 # Source code
-│   ├── main.py         # Main application & GUI
-│   └── search_engine.py # Core search functionality
+│   ├── main.py         # Main application & GUI (1,346 lines)
+│   ├── search_engine.py # Core search functionality (422 lines)
+│   └── __pycache__/    # Python bytecode cache
 ├── main.py             # Application entry point
 ├── requirements.txt    # Python dependencies
-└── README.md          # This file
+├── README.md          # This file
+├── LICENSE            # MIT License
+└── CONTRIBUTING.md    # Contribution guidelines
 ```
 
 ### Technology Stack
-- **GUI Framework:** PySide6 (Qt6)
-- **Search Engine:** Python `re` module with optimizations
-- **Threading:** QThread for background operations
-- **Persistence:** JSON for settings and history
+- **GUI Framework:** PySide6 (Qt6) - Modern, cross-platform UI
+- **Search Engine:** Python `re` module with multi-threading
+- **Image Processing:** Pillow (PIL) for EXIF/GPS extraction
+- **Document Parsing:** PyPDF2, python-docx, openpyxl for metadata
+- **Media Tags:** Mutagen for audio/video file metadata
+- **Threading:** QThread for non-blocking background operations
+- **Persistence:** JSON for settings and search history
+
+### Key Components
+
+**MainWindow Class** (`src/main.py`)
+- Three-panel UI layout
+- File browser with lazy loading
+- Results tree with match grouping
+- Preview pane with syntax highlighting
+- Regex pattern menu system
+- Metadata preview formatting
+- Search history management
+- Preferences dialog
+
+**SearchEngine Class** (`src/search_engine.py`)
+- Multi-threaded file scanning
+- Regex pattern compilation and caching
+- Image metadata extraction (EXIF, GPS, PNG)
+- File metadata extraction (PDF, Office, audio/video)
+- Context line extraction
+- File filtering and exclusion patterns
+- Performance optimizations (file size limits, caching)
 
 ## 🛠️ Development
 
-### Building from Source
+### Running from Source
+
 ```bash
-# Install development dependencies
-pip install -r requirements.txt
+# Ensure you're in the project directory
+cd advanced_search
 
 # Run the application
 python main.py
 ```
 
-### Creating Executable
-The project includes a GitHub Actions workflow that automatically builds executables on push:
+### Code Structure
 
-```bash
-# Or build manually with PyInstaller
-pip install pyinstaller
-pyinstaller --name="AdvancedSearch" --windowed --onefile --icon=assets/icon.ico main.py
-```
+The application uses a clean separation of concerns:
+
+1. **main.py (entry point)** - Launches the application
+2. **src/main.py** - All GUI code and user interactions
+3. **src/search_engine.py** - Pure search logic, no GUI dependencies
+
+### Key Design Patterns
+
+- **MVC Pattern** - Separation of search logic from UI
+- **Observer Pattern** - Qt signals/slots for event handling
+- **Worker Thread Pattern** - QThread for background search operations
+- **Lazy Loading** - File browser loads directories on-demand
+- **LRU Cache** - File content caching with size limits
+
+### Adding New Features
+
+To add new metadata sources:
+
+1. Add library import with try/except in `search_engine.py`
+2. Add file extensions to `FILE_METADATA_EXTENSIONS` class constant
+3. Add extraction logic to `_extract_file_metadata()` method
+4. Update README with supported formats
 
 ## 🤝 Contributing
 
@@ -171,9 +312,23 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
+
 ## 📝 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🔮 Roadmap
+
+**Potential Future Features:**
+- [ ] Linux and macOS support
+- [ ] Export search results to CSV/JSON
+- [ ] Search result filtering and sorting options
+- [ ] Custom regex pattern library
+- [ ] Color themes and UI customization
+- [ ] Integration with more file formats
+- [ ] Binary file content search (hex mode)
+- [ ] Network drive search optimization
 
 ## 👤 Author
 
@@ -181,12 +336,31 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgments
 
-- Icons by [Icons8](https://icons8.com)
-- Built with [PySide6](https://wiki.qt.io/Qt_for_Python)
+- SVG Icons created for this project (chevron_up.svg, chevron_down.svg, icon.svg)
+- Built with [PySide6](https://wiki.qt.io/Qt_for_Python) - Qt for Python
+- Image processing by [Pillow](https://python-pillow.org/)
+- PDF parsing by [PyPDF2](https://pypdf2.readthedocs.io/)
+- Office document handling by [python-docx](https://python-docx.readthedocs.io/) and [openpyxl](https://openpyxl.readthedocs.io/)
+- Audio/video metadata by [Mutagen](https://mutagen.readthedocs.io/)
 
 ## 📮 Support
 
 If you encounter any issues or have suggestions, please [open an issue](../../issues).
+
+## ⚠️ Known Limitations
+
+- **Windows only** - Currently designed for Windows (paths, file handling)
+- **Text encoding** - Files must be text-readable or supported binary formats (images, PDFs, Office docs)
+- **Large files** - Very large files (>50MB default) are skipped to prevent slowdown
+- **Metadata availability** - Not all files contain metadata; results vary by file type and creation method
+
+## 📊 Performance Tips
+
+1. **Use file extension filters** - Limit search to specific file types (`.py,.js,.txt`)
+2. **Adjust file size limits** - Reduce max file size in preferences for faster searches
+3. **Enable metadata search selectively** - Only when needed, as it adds processing overhead
+4. **Clear cache periodically** - If experiencing memory issues with large file sets
+5. **Use specific regex patterns** - More specific patterns search faster than broad ones
 
 ---
 

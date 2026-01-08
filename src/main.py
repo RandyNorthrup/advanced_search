@@ -110,6 +110,10 @@ class SearchWorker(QThread):
 class MainWindow(QMainWindow):
     """Main application window"""
     
+    # Class constants for file extensions
+    IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.tiff', '.tif', '.gif', '.bmp', '.webp'}
+    FILE_METADATA_EXTENSIONS = {'.pdf', '.docx', '.xlsx', '.pptx', '.mp3', '.flac', '.m4a', '.mp4', '.avi', '.mkv'}
+    
     def __init__(self):
         super().__init__()
         self.search_engine = SearchEngine()
@@ -393,6 +397,20 @@ class MainWindow(QMainWindow):
             lambda state: self.search_engine.set_whole_word(state == Qt.Checked)
         )
         layout.addWidget(self.whole_word_cb)
+        
+        self.metadata_cb = QCheckBox("Search image metadata")
+        self.metadata_cb.setToolTip("Search image metadata (EXIF, GPS, etc.) for JPG, PNG, TIFF files")
+        self.metadata_cb.stateChanged.connect(
+            lambda state: self.search_engine.set_search_metadata(state == 2)
+        )
+        layout.addWidget(self.metadata_cb)
+        
+        self.file_metadata_cb = QCheckBox("Search file metadata")
+        self.file_metadata_cb.setToolTip("Search file properties (PDF, Office docs, audio/video files): author, title, dates, etc.")
+        self.file_metadata_cb.stateChanged.connect(
+            lambda state: self.search_engine.set_search_file_metadata(state == 2)
+        )
+        layout.addWidget(self.file_metadata_cb)
         
         # Context lines dropdown
         context_label = QLabel("Context:")
@@ -795,6 +813,23 @@ class MainWindow(QMainWindow):
         self.preview_text.clear()
         
         try:
+            # Check if this is an image file
+            file_ext = os.path.splitext(file_path)[1].lower()
+            image_extensions = {'.jpg', '.jpeg', '.png', '.tiff', '.tif', '.gif', '.bmp', '.webp'}
+            file_metadata_extensions = {'.pdf', '.docx', '.xlsx', '.pptx', '.mp3', '.flac', '.m4a', '.mp4', '.avi', '.mkv'}
+            is_image = file_ext in image_extensions
+            is_file_with_metadata = file_ext in file_metadata_extensions
+            
+            # If metadata search is enabled and this is an image, show image metadata
+            if is_image and self.search_engine.search_metadata:
+                self._display_image_metadata_preview(file_path, matches)
+                return
+            
+            # If file metadata search is enabled and this has metadata, show file metadata
+            if is_file_with_metadata and self.search_engine.search_file_metadata:
+                self._display_file_metadata_preview(file_path, matches)
+                return
+            
             # Check file size first
             file_size = os.path.getsize(file_path)
             if file_size > self.max_file_size:
@@ -853,6 +888,130 @@ class MainWindow(QMainWindow):
             self.current_file_matches = []
             self.current_match_index = 0
             self.update_match_navigation()
+    
+    def _display_image_metadata_preview(self, file_path, matches):
+        """Display image metadata in preview pane"""
+        try:
+            from PIL import Image
+            from PIL.ExifTags import TAGS, GPSTAGS
+            import os
+            from datetime import datetime
+            
+            metadata = {}
+            
+            # Extract and display metadata
+            with Image.open(file_path) as img:
+                # File system info
+                stat_info = os.stat(file_path)
+                metadata['File_Size'] = f"{stat_info.st_size / 1024:.2f} KB"
+                metadata['File_Created'] = datetime.fromtimestamp(stat_info.st_ctime).strftime('%Y-%m-%d %H:%M:%S')
+                metadata['File_Modified'] = datetime.fromtimestamp(stat_info.st_mtime).strftime('%Y-%m-%d %H:%M:%S')
+                
+                # Basic image info
+                metadata['Format'] = img.format or 'Unknown'
+                metadata['Mode'] = img.mode
+                metadata['Size'] = f"{img.width}x{img.height}"
+                
+                # Try to get EXIF data using getexif() (newer API)
+                try:
+                    exif = img.getexif()
+                    if exif:
+                        for tag_id, value in exif.items():
+                            tag_name = TAGS.get(tag_id, f"Tag_{tag_id}")
+                            
+                            # Handle GPS data specially
+                            if tag_name == "GPSInfo":
+                                try:
+                                    gps_data = {GPSTAGS.get(gps_tag_id, f"GPS_{gps_tag_id}"): str(value[gps_tag_id]) 
+                                               for gps_tag_id in value}
+                                    metadata['GPS_Info'] = str(gps_data)
+                                except:
+                                    metadata['GPS_Info'] = str(value)
+                            else:
+                                # Convert value to string, handle bytes
+                                if isinstance(value, bytes):
+                                    try:
+                                        value = value.decode('utf-8', errors='ignore')
+                                    except:
+                                        value = str(value)[:100]
+                                elif isinstance(value, (tuple, list)) and len(str(value)) > 100:
+                                    value = str(value)[:100] + "..."
+                                metadata[tag_name] = str(value)
+                except (AttributeError, KeyError, TypeError):
+                    pass
+                
+                # PNG info
+                if hasattr(img, 'info') and img.info:
+                    for key, value in img.info.items():
+                        if key not in metadata:
+                            metadata[f"PNG_{key}"] = str(value)[:200]
+            
+            # Display using common metadata display method
+            note = "This image has no EXIF metadata (typical for screenshots)" if len(metadata) <= 6 else None
+            self._display_metadata_common(file_path, matches, metadata, "Image Metadata", note)
+                
+        except Exception as e:
+            self.preview_text.setPlainText(f"Error reading image metadata: {str(e)}")
+            self.current_file_matches = []
+            self.current_match_index = 0
+            self.update_match_navigation()
+    
+    def _display_file_metadata_preview(self, file_path, matches):
+        """Display file metadata in preview pane (PDF, Office, audio, etc.)"""
+        try:
+            import os
+            from datetime import datetime
+            
+            # Extract file metadata
+            metadata = self.search_engine._extract_file_metadata(file_path)
+            
+            # Add file system info
+            stat_info = os.stat(file_path)
+            metadata['File_Size'] = f"{stat_info.st_size / 1024:.2f} KB"
+            metadata['File_Created'] = datetime.fromtimestamp(stat_info.st_ctime).strftime('%Y-%m-%d %H:%M:%S')
+            metadata['File_Modified'] = datetime.fromtimestamp(stat_info.st_mtime).strftime('%Y-%m-%d %H:%M:%S')
+            
+            # Display using common metadata display method
+            note = "No extractable metadata found for this file type" if len(metadata) <= 3 else None
+            self._display_metadata_common(file_path, matches, metadata, "File Metadata", note)
+                
+        except Exception as e:
+            self.preview_text.setPlainText(f"Error reading file metadata: {str(e)}")
+            self.current_file_matches = []
+            self.current_match_index = 0
+            self.update_match_navigation()
+    
+    def _display_metadata_common(self, file_path, matches, metadata, header_text, note=None):
+        """Common method to display metadata in preview pane"""
+        display_lines = [
+            f"{header_text}: {file_path}",
+            f"Total matches: {len(matches)}",
+            "=" * 80,
+            ""
+        ]
+        
+        if note:
+            display_lines.append(f"    Note: {note}")
+            display_lines.append("")
+        
+        # Build match line numbers set for quick lookup
+        match_lines = {match.line_number for match in matches}
+        
+        # Display metadata with match indicators
+        for line_num, (key, value) in enumerate(metadata.items(), start=1):
+            line_text = f"{key}: {value}"
+            prefix = '>>> ' if line_num in match_lines else '    '
+            display_lines.append(f"{prefix}{line_num:5d} | {line_text}")
+        
+        self.preview_text.setPlainText("\n".join(display_lines))
+        
+        # Highlight all matches
+        self.highlight_all_matches()
+        
+        # Update navigation and go to first match
+        self.update_match_navigation()
+        if matches:
+            self.jump_to_current_match()
     
     def _cache_file(self, file_path, file_size, lines):
         """Cache file contents with LRU eviction"""
@@ -1091,18 +1250,20 @@ class MainWindow(QMainWindow):
             self,
             "About Advanced Search Tool",
             "<h3>Advanced Search Tool</h3>"
-            "<p>Version 0.2.0-alpha</p>"
+            "<p>Version 0.3.0-alpha</p>"
             "<p>Author: Randy Northrup</p>"
-            "<p>A Windows GUI application for grep-style searching with file browser interface.</p>"
-            "<p><b>Features:</b></p>"
+            "<p>A Windows GUI application for grep-style searching with advanced regex patterns and metadata search.</p>"
+            "<p><b>Key Features:</b></p>"
             "<ul>"
-            "<li>Grep-style pattern search with regex support</li>"
-            "<li>File browser style results view</li>"
-            "<li>Context display around matches</li>"
-            "<li>Directory tree explorer</li>"
-            "<li>Double-click to open files</li>"
+            "<li>Grep-style pattern search with full regex support</li>"
+            "<li>8 common regex patterns in quick-access menu</li>"
+            "<li>Image metadata search (EXIF, GPS) for JPG, PNG, TIFF, etc.</li>"
+            "<li>File metadata search (PDF, Office docs, audio/video)</li>"
+            "<li>File browser with organized results tree</li>"
+            "<li>Context display and syntax highlighting</li>"
+            "<li>Performance optimizations and caching</li>"
             "</ul>"
-            "<p>Built with Python and PySide6</p>"
+            "<p>Built with Python, PySide6, Pillow, PyPDF2, and more</p>"
         )
     
     def load_search_history(self):
