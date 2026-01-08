@@ -1959,7 +1959,7 @@ class MainWindow(QMainWindow):
             self,
             "About Advanced Search Tool",
             "<h3>Advanced Search Tool</h3>"
-            "<p>Version 0.5.0</p>"
+            "<p>Version 0.5.1</p>"
             "<p>Author: Randy Northrup</p>"
             "<p>A Windows GUI application for grep-style searching with advanced regex patterns and metadata search.</p>"
             "<p><b>Key Features:</b></p>"
