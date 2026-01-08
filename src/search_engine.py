@@ -478,7 +478,7 @@ class SearchEngine:
                                         metadata['Publisher'] = elem.text[:200] if elem.text else ''
                                     for elem in root.findall('.//dc:language', ns):
                                         metadata['Language'] = elem.text if elem.text else ''
-                                except Exception Exception:
+                                except Exception:
                                     pass
                             break
             
