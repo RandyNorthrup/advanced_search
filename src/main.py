@@ -407,11 +407,11 @@ class HelpDialog(QDialog):
 
 
 class CustomPatternManagerDialog(QDialog):
-    \"\"\"Dialog for managing custom regex patterns\"\"\"
+    """Dialog for managing custom regex patterns"""
     
     def __init__(self, parent, custom_patterns):
         super().__init__(parent)
-        self.setWindowTitle(\"Manage Custom Regex Patterns\")
+        self.setWindowTitle("Manage Custom Regex Patterns")
         self.setModal(True)
         self.custom_patterns = custom_patterns.copy()
         
@@ -419,12 +419,12 @@ class CustomPatternManagerDialog(QDialog):
         layout = QVBoxLayout()
         
         # Instructions
-        inst_label = QLabel(\"Add, edit, or remove your custom regex patterns:\")
+        inst_label = QLabel("Add, edit, or remove your custom regex patterns:")
         layout.addWidget(inst_label)
         
         # List of patterns
         self.pattern_list = QTreeWidget()
-        self.pattern_list.setHeaderLabels([\"Label\", \"Pattern\"])
+        self.pattern_list.setHeaderLabels(["Label", "Pattern"])
         self.pattern_list.setColumnWidth(0, 200)
         self.pattern_list.setColumnWidth(1, 400)
         self.refresh_pattern_list()
@@ -433,15 +433,15 @@ class CustomPatternManagerDialog(QDialog):
         # Buttons
         button_layout = QHBoxLayout()
         
-        add_btn = QPushButton(\"Add Pattern\")
+        add_btn = QPushButton("Add Pattern")
         add_btn.clicked.connect(self.add_pattern)
         button_layout.addWidget(add_btn)
         
-        edit_btn = QPushButton(\"Edit Selected\")
+        edit_btn = QPushButton("Edit Selected")
         edit_btn.clicked.connect(self.edit_pattern)
         button_layout.addWidget(edit_btn)
         
-        remove_btn = QPushButton(\"Remove Selected\")
+        remove_btn = QPushButton("Remove Selected")
         remove_btn.clicked.connect(self.remove_pattern)
         button_layout.addWidget(remove_btn)
         
@@ -458,7 +458,7 @@ class CustomPatternManagerDialog(QDialog):
         self.resize(700, 400)
     
     def refresh_pattern_list(self):
-        \"\"\"Refresh the pattern list widget\"\"\"
+        """Refresh the pattern list widget"""
         self.pattern_list.clear()
         for name, info in self.custom_patterns.items():
             item = QTreeWidgetItem(self.pattern_list)
@@ -467,8 +467,8 @@ class CustomPatternManagerDialog(QDialog):
             item.setData(0, Qt.UserRole, name)
     
     def add_pattern(self):
-        \"\"\"Add a new custom pattern\"\"\"
-        dialog = CustomPatternEditDialog(self, \"\", \"\", \"\")
+        """Add a new custom pattern"""
+        dialog = CustomPatternEditDialog(self, "", "", "")
         if dialog.exec() == QDialog.Accepted:
             name, label, pattern = dialog.get_pattern()
             if name and label and pattern:
@@ -477,7 +477,7 @@ class CustomPatternManagerDialog(QDialog):
                 unique_name = base_name
                 counter = 1
                 while unique_name in self.custom_patterns:
-                    unique_name = f\"{base_name}_{counter}\"
+                    unique_name = f"{base_name}_{counter}"
                     counter += 1
                 
                 self.custom_patterns[unique_name] = {
@@ -488,10 +488,10 @@ class CustomPatternManagerDialog(QDialog):
                 self.refresh_pattern_list()
     
     def edit_pattern(self):
-        \"\"\"Edit the selected pattern\"\"\"
+        """Edit the selected pattern"""
         selected_items = self.pattern_list.selectedItems()
         if not selected_items:
-            QMessageBox.warning(self, \"Warning\", \"Please select a pattern to edit\")
+            QMessageBox.warning(self, "Warning", "Please select a pattern to edit")
             return
         
         item = selected_items[0]
@@ -507,10 +507,10 @@ class CustomPatternManagerDialog(QDialog):
                 self.refresh_pattern_list()
     
     def remove_pattern(self):
-        \"\"\"Remove the selected pattern\"\"\"
+        """Remove the selected pattern"""
         selected_items = self.pattern_list.selectedItems()
         if not selected_items:
-            QMessageBox.warning(self, \"Warning\", \"Please select a pattern to remove\")
+            QMessageBox.warning(self, "Warning", "Please select a pattern to remove")
             return
         
         item = selected_items[0]
@@ -518,8 +518,8 @@ class CustomPatternManagerDialog(QDialog):
         
         reply = QMessageBox.question(
             self,
-            \"Confirm Removal\",
-            f\"Remove pattern '{self.custom_patterns[name]['label']}'?\",
+            "Confirm Removal",
+            f"Remove pattern '{self.custom_patterns[name]['label']}'?",
             QMessageBox.Yes | QMessageBox.No
         )
         
@@ -528,16 +528,16 @@ class CustomPatternManagerDialog(QDialog):
             self.refresh_pattern_list()
     
     def get_custom_patterns(self):
-        \"\"\"Return the updated custom patterns\"\"\"
+        """Return the updated custom patterns"""
         return self.custom_patterns
 
 
 class CustomPatternEditDialog(QDialog):
-    \"\"\"Dialog for editing a single custom pattern\"\"\"
+    """Dialog for editing a single custom pattern"""
     
     def __init__(self, parent, name, label, pattern):
         super().__init__(parent)
-        self.setWindowTitle(\"Edit Custom Pattern\" if name else \"Add Custom Pattern\")
+        self.setWindowTitle("Edit Custom Pattern" if name else "Add Custom Pattern")
         self.setModal(True)
         
         # Create layout
@@ -547,32 +547,32 @@ class CustomPatternEditDialog(QDialog):
         # Name field (only for new patterns)
         if not name:
             self.name_input = QLineEdit()
-            self.name_input.setPlaceholderText(\"e.g., my_pattern\")
-            form.addRow(\"Name:\", self.name_input)
+            self.name_input.setPlaceholderText("e.g., my_pattern")
+            form.addRow("Name:", self.name_input)
         else:
             self.name_input = None
         
         # Label field
         self.label_input = QLineEdit()
         self.label_input.setText(label)
-        self.label_input.setPlaceholderText(\"e.g., My Custom Pattern\")
-        form.addRow(\"Label:\", self.label_input)
+        self.label_input.setPlaceholderText("e.g., My Custom Pattern")
+        form.addRow("Label:", self.label_input)
         
         # Pattern field
         self.pattern_input = QLineEdit()
         self.pattern_input.setText(pattern)
-        self.pattern_input.setPlaceholderText(r\"e.g., \\b[A-Z]{3}-\\d{4}\\b\")
-        form.addRow(\"Regex Pattern:\", self.pattern_input)
+        self.pattern_input.setPlaceholderText(r"e.g., \\b[A-Z]{3}-\\d{4}\\b")
+        form.addRow("Regex Pattern:", self.pattern_input)
         
         layout.addLayout(form)
         
         # Example/help text
         help_label = QLabel(
-            \"<small>Examples:<br>\" +
-            \"• <b>\\\\b[A-Z]{3}-\\\\d{4}\\\\b</b> - Match ABC-1234 format<br>\" +
-            \"• <b>TODO:|FIXME:</b> - Find code comments<br>\" +
-            \"• <b>\\\\$\\\\d+\\\\.\\\\d{2}</b> - Match currency amounts<br>\" +
-            \"</small>\"
+            "<small>Examples:<br>" +
+            "• <b>\\\\b[A-Z]{3}-\\\\d{4}\\\\b</b> - Match ABC-1234 format<br>" +
+            "• <b>TODO:|FIXME:</b> - Find code comments<br>" +
+            "• <b>\\\\$\\\\d+\\\\.\\\\d{2}</b> - Match currency amounts<br>" +
+            "</small>"
         )
         help_label.setWordWrap(True)
         layout.addWidget(help_label)
@@ -587,8 +587,8 @@ class CustomPatternEditDialog(QDialog):
         self.resize(500, 250)
     
     def get_pattern(self):
-        \"\"\"Return the pattern data (name, label, pattern)\"\"\"
-        name = self.name_input.text().strip() if self.name_input else \"\"
+        """Return the pattern data (name, label, pattern)"""
+        name = self.name_input.text().strip() if self.name_input else ""
         label = self.label_input.text().strip()
         pattern = self.pattern_input.text().strip()
         return name, label, pattern
@@ -1240,12 +1240,12 @@ class MainWindow(QMainWindow):
             self.save_custom_patterns()
     
     def show_custom_pattern_manager(self):
-        \"\"\"Show dialog to manage custom regex patterns\"\"\"
+        """Show dialog to manage custom regex patterns"""
         dialog = CustomPatternManagerDialog(self, self.custom_patterns)
         if dialog.exec() == QDialog.Accepted:
             self.custom_patterns = dialog.get_custom_patterns()
             self.save_custom_patterns()
-            self.status_bar.showMessage(\"Custom patterns updated\", 3000)
+            self.status_bar.showMessage("Custom patterns updated", 3000)
     
     def show_dir_context_menu(self, position):
         """Show context menu for directory tree items"""
