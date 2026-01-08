@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (
     QPushButton, QTreeWidget, QTreeWidgetItem, QTextEdit, QLineEdit,
     QSplitter, QLabel, QCheckBox, QSpinBox,
     QProgressBar, QStatusBar, QMessageBox, QMenu, QComboBox,
-    QDialog, QFormLayout, QDialogButtonBox, QTabWidget
+    QDialog, QFormLayout, QDialogButtonBox, QTabWidget, QGridLayout
 )
 from PySide6.QtCore import Qt, QThread, Signal
 from PySide6.QtGui import QFont, QColor, QTextCharFormat, QTextCursor, QAction, QIcon
@@ -900,81 +900,26 @@ class MainWindow(QMainWindow):
         self.update_search_history_dropdown()
         layout.addWidget(self.search_input)
         
-        # Search and Stop buttons
-        self.search_btn = QPushButton("Search")
-        self.search_btn.setToolTip("Start searching in the selected directory (Enter)")
-        self.search_btn.clicked.connect(self.start_search)
-        self.search_btn.setDefault(True)
-        layout.addWidget(self.search_btn)
-        
-        self.stop_btn = QPushButton("Stop")
-        self.stop_btn.setToolTip("Stop the current search operation")
-        self.stop_btn.clicked.connect(self.stop_search)
-        self.stop_btn.setEnabled(False)
-        layout.addWidget(self.stop_btn)
+        # Multi-modal Search/Stop button
+        self.search_stop_btn = QPushButton("Search")
+        self.search_stop_btn.setToolTip("Start searching in the selected directory (Enter)")
+        self.search_stop_btn.clicked.connect(self.toggle_search)
+        self.search_stop_btn.setDefault(True)
+        self.is_searching = False
+        layout.addWidget(self.search_stop_btn)
         
         # Separator
-        layout.addSpacing(20)
+        layout.addSpacing(10)
         
-        # Checkboxes
-        self.case_sensitive_cb = QCheckBox("Case sensitive")
-        self.case_sensitive_cb.setToolTip("Match exact case when searching")
-        self.case_sensitive_cb.stateChanged.connect(
-            lambda state: self.search_engine.set_case_sensitive(state == Qt.Checked)
-        )
-        layout.addWidget(self.case_sensitive_cb)
+        # Compact grid layout for all controls
+        controls_grid = QGridLayout()
+        controls_grid.setSpacing(8)
+        controls_grid.setContentsMargins(0, 0, 0, 0)
         
-        # Regex pattern selector button
-        assets_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets")
-        chevron_icon_path = os.path.join(assets_dir, "chevron_down.svg")
-        self.regex_btn = QPushButton("Regex Patterns")
-        if os.path.exists(chevron_icon_path):
-            self.regex_btn.setIcon(QIcon(chevron_icon_path))
-            self.regex_btn.setLayoutDirection(Qt.RightToLeft)  # Icon on the right
-        self.regex_btn.setToolTip("Select common regex patterns to search for")
-        self.regex_btn.setMaximumWidth(150)
-        self.regex_btn.clicked.connect(self.show_regex_patterns_menu)
-        layout.addWidget(self.regex_btn)
-        
-        self.whole_word_cb = QCheckBox("Whole word")
-        self.whole_word_cb.setToolTip("Only match complete words (not partial matches)")
-        self.whole_word_cb.stateChanged.connect(
-            lambda state: self.search_engine.set_whole_word(state == Qt.Checked)
-        )
-        layout.addWidget(self.whole_word_cb)
-        
-        self.metadata_cb = QCheckBox("Search image metadata")
-        self.metadata_cb.setToolTip("Search image metadata (EXIF, GPS, etc.) for JPG, PNG, TIFF files")
-        self.metadata_cb.stateChanged.connect(
-            lambda state: self.search_engine.set_search_metadata(state == 2)
-        )
-        layout.addWidget(self.metadata_cb)
-        
-        self.file_metadata_cb = QCheckBox("Search file metadata")
-        self.file_metadata_cb.setToolTip("Search file properties (PDF, Office docs, audio/video files): author, title, dates, etc.")
-        self.file_metadata_cb.stateChanged.connect(
-            lambda state: self.search_engine.set_search_file_metadata(state == 2)
-        )
-        layout.addWidget(self.file_metadata_cb)
-        
-        self.archive_search_cb = QCheckBox("Search in archives")
-        self.archive_search_cb.setToolTip("Search inside ZIP and EPUB files without extraction")
-        self.archive_search_cb.stateChanged.connect(
-            lambda state: self.search_engine.set_search_in_archives(state == 2)
-        )
-        layout.addWidget(self.archive_search_cb)
-        
-        self.hex_search_cb = QCheckBox("Binary/hex search")
-        self.hex_search_cb.setToolTip("Search binary files using hex patterns")
-        self.hex_search_cb.stateChanged.connect(
-            lambda state: self.search_engine.set_hex_search(state == 2)
-        )
-        layout.addWidget(self.hex_search_cb)
-        
-        # Context lines dropdown
+        # Row 0: Context, Regex, Case sensitive, Whole word, Image metadata
         context_label = QLabel("Context:")
         context_label.setToolTip("Number of lines to show before and after each match")
-        layout.addWidget(context_label)
+        controls_grid.addWidget(context_label, 0, 0)
         
         self.context_combo = QComboBox()
         for i in range(11):  # 0 to 10
@@ -986,18 +931,74 @@ class MainWindow(QMainWindow):
         )
         self.context_combo.setMinimumWidth(50)
         self.context_combo.setMaximumWidth(70)
-        layout.addWidget(self.context_combo)
+        controls_grid.addWidget(self.context_combo, 0, 1)
         
-        # File extensions filter
+        # Regex pattern selector button
+        assets_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets")
+        chevron_icon_path = os.path.join(assets_dir, "chevron_down.svg")
+        self.regex_btn = QPushButton("Regex")
+        if os.path.exists(chevron_icon_path):
+            self.regex_btn.setIcon(QIcon(chevron_icon_path))
+            self.regex_btn.setLayoutDirection(Qt.RightToLeft)  # Icon on the right
+        self.regex_btn.setToolTip("Select common regex patterns to search for")
+        self.regex_btn.setMaximumWidth(100)
+        self.regex_btn.clicked.connect(self.show_regex_patterns_menu)
+        controls_grid.addWidget(self.regex_btn, 0, 2)
+        
+        self.case_sensitive_cb = QCheckBox("Case sensitive")
+        self.case_sensitive_cb.setToolTip("Match exact case when searching")
+        self.case_sensitive_cb.stateChanged.connect(
+            lambda state: self.search_engine.set_case_sensitive(state == Qt.Checked)
+        )
+        controls_grid.addWidget(self.case_sensitive_cb, 0, 3)
+        
+        self.whole_word_cb = QCheckBox("Whole word")
+        self.whole_word_cb.setToolTip("Only match complete words (not partial matches)")
+        self.whole_word_cb.stateChanged.connect(
+            lambda state: self.search_engine.set_whole_word(state == Qt.Checked)
+        )
+        controls_grid.addWidget(self.whole_word_cb, 0, 4)
+        
+        self.metadata_cb = QCheckBox("Image metadata")
+        self.metadata_cb.setToolTip("Search image metadata (EXIF, GPS, etc.) for JPG, PNG, TIFF files")
+        self.metadata_cb.stateChanged.connect(
+            lambda state: self.search_engine.set_search_metadata(state == 2)
+        )
+        controls_grid.addWidget(self.metadata_cb, 0, 5)
+        
+        # Row 1: Extensions label/input, File metadata, Archive search, Binary/hex
         ext_label = QLabel("Extensions:")
         ext_label.setToolTip("Filter files by extension (leave empty to search all files)")
-        layout.addWidget(ext_label)
+        controls_grid.addWidget(ext_label, 1, 0)
         
         self.extensions_input = QLineEdit()
         self.extensions_input.setPlaceholderText(".py,.txt,.js")
         self.extensions_input.setToolTip("Comma-separated file extensions to search\nExample: .py,.txt,.js\nLeave empty to search all files")
         self.extensions_input.setMaximumWidth(150)
-        layout.addWidget(self.extensions_input)
+        controls_grid.addWidget(self.extensions_input, 1, 1, 1, 2)
+        
+        self.file_metadata_cb = QCheckBox("File metadata")
+        self.file_metadata_cb.setToolTip("Search file properties (PDF, Office docs, audio/video files): author, title, dates, etc.")
+        self.file_metadata_cb.stateChanged.connect(
+            lambda state: self.search_engine.set_search_file_metadata(state == 2)
+        )
+        controls_grid.addWidget(self.file_metadata_cb, 1, 3)
+        
+        self.archive_search_cb = QCheckBox("Archive search")
+        self.archive_search_cb.setToolTip("Search inside ZIP and EPUB files without extraction")
+        self.archive_search_cb.stateChanged.connect(
+            lambda state: self.search_engine.set_search_in_archives(state == 2)
+        )
+        controls_grid.addWidget(self.archive_search_cb, 1, 4)
+        
+        self.hex_search_cb = QCheckBox("Binary/hex")
+        self.hex_search_cb.setToolTip("Search binary files using hex patterns")
+        self.hex_search_cb.stateChanged.connect(
+            lambda state: self.search_engine.set_hex_search(state == 2)
+        )
+        controls_grid.addWidget(self.hex_search_cb, 1, 5)
+        
+        layout.addLayout(controls_grid)
         
         layout.addStretch()
         return layout
@@ -1008,22 +1009,37 @@ class MainWindow(QMainWindow):
         self.dir_tree.clear()
         
         # Add common locations
+        home_path = os.path.expanduser("~")
+        username = os.path.basename(home_path)
         home_item = QTreeWidgetItem(self.dir_tree)
-        home_item.setText(0, "Home")
-        home_item.setData(0, Qt.UserRole, {"path": os.path.expanduser("~"), "is_file": False})
+        home_item.setText(0, f"Home ({username})")
+        home_item.setData(0, Qt.UserRole, {"path": home_path, "is_file": False})
         home_item.setExpanded(True)
         
         # Add subdirectories and files of home
-        home_path = os.path.expanduser("~")
         self._populate_tree_item(home_item, home_path)
         
         # Add drives (Windows)
         if os.name == 'nt':
+            import ctypes
             for drive in string.ascii_uppercase:
                 drive_path = f"{drive}:\\\\"
                 if os.path.exists(drive_path):
+                    # Get volume label
+                    try:
+                        volume_name = ctypes.create_unicode_buffer(256)
+                        ctypes.windll.kernel32.GetVolumeInformationW(
+                            ctypes.c_wchar_p(drive_path),
+                            volume_name, ctypes.sizeof(volume_name),
+                            None, None, None, None, 0
+                        )
+                        label = volume_name.value
+                        display_text = f"{drive}: ({label})" if label else f"{drive}:"
+                    except Exception:
+                        display_text = f"{drive}:"
+                    
                     drive_item = QTreeWidgetItem(self.dir_tree)
-                    drive_item.setText(0, f"{drive}:")
+                    drive_item.setText(0, display_text)
                     drive_item.setData(0, Qt.UserRole, {"path": drive_path, "is_file": False})
                     # Add placeholder for lazy loading
                     placeholder = QTreeWidgetItem(drive_item)
@@ -1391,6 +1407,13 @@ class MainWindow(QMainWindow):
             f"Found {total_matches} matches in {total_files} files"
         )
     
+    def toggle_search(self):
+        """Toggle between starting and stopping search"""
+        if self.is_searching:
+            self.stop_search()
+        else:
+            self.start_search()
+    
     def start_search(self):
         """Start a new search"""
         pattern = self.search_input.currentText()
@@ -1423,8 +1446,9 @@ class MainWindow(QMainWindow):
         self.current_results = []
         
         # Update UI state
-        self.search_btn.setEnabled(False)
-        self.stop_btn.setEnabled(True)
+        self.is_searching = True
+        self.search_stop_btn.setText("Stop")
+        self.search_stop_btn.setToolTip("Stop the current search operation")
         self.progress_bar.setVisible(True)
         self.progress_bar.setRange(0, 0)  # Indeterminate
         self.status_bar.showMessage(f"Searching for '{pattern}'...")
@@ -1449,8 +1473,9 @@ class MainWindow(QMainWindow):
         self.apply_sort()
         
         # Update UI state
-        self.search_btn.setEnabled(True)
-        self.stop_btn.setEnabled(False)
+        self.is_searching = False
+        self.search_stop_btn.setText("Search")
+        self.search_stop_btn.setToolTip("Start searching in the selected directory (Enter)")
         self.progress_bar.setVisible(False)
     
     def on_tree_item_clicked(self, item, column):
@@ -1604,14 +1629,14 @@ class MainWindow(QMainWindow):
                                     gps_data = {GPSTAGS.get(gps_tag_id, f"GPS_{gps_tag_id}"): str(value[gps_tag_id]) 
                                                for gps_tag_id in value}
                                     metadata['GPS_Info'] = str(gps_data)
-                                except:
+                                except Exception:
                                     metadata['GPS_Info'] = str(value)
                             else:
                                 # Convert value to string, handle bytes
                                 if isinstance(value, bytes):
                                     try:
                                         value = value.decode('utf-8', errors='ignore')
-                                    except:
+                                    except Exception:
                                         value = str(value)[:100]
                                 elif isinstance(value, (tuple, list)) and len(str(value)) > 100:
                                     value = str(value)[:100] + "..."
@@ -1934,7 +1959,7 @@ class MainWindow(QMainWindow):
             self,
             "About Advanced Search Tool",
             "<h3>Advanced Search Tool</h3>"
-            "<p>Version 0.4.0-alpha</p>"
+            "<p>Version 0.5.0</p>"
             "<p>Author: Randy Northrup</p>"
             "<p>A Windows GUI application for grep-style searching with advanced regex patterns and metadata search.</p>"
             "<p><b>Key Features:</b></p>"

@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-0.5.0--alpha-blue)
+![Version](https://img.shields.io/badge/version-0.5.0-blue)
 ![Python](https://img.shields.io/badge/python-3.8+-green)
 ![License](https://img.shields.io/badge/license-MIT-orange)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey)
@@ -151,6 +151,17 @@ Click the **"Regex Patterns ▼"** button to open a menu with common regex patte
 
 **Example**: Enable "Email addresses" to find all email addresses in your files without writing regex manually.
 
+### Custom Patterns
+
+Create and save your own regex patterns:
+
+1. Click **"Regex Patterns ▼"** to open the menu
+2. Click **"Manage Custom Patterns..."** at the bottom
+3. Click **"Add Pattern"** to create a new pattern
+4. Enter a name and regex pattern, then click **"Save"**
+5. Your custom patterns appear in the menu alongside built-in patterns
+6. Check your custom pattern to apply it to searches
+
 ### Search Options
 
 | Option | Description | Default |
@@ -162,6 +173,8 @@ Click the **"Regex Patterns ▼"** button to open a menu with common regex patte
 | **Extensions** | Filter by file types (e.g., `.py,.txt,.js`) | All files |
 | **Search image metadata** | Search EXIF/GPS in JPG, PNG, TIFF, etc. | Off |
 | **Search file metadata** | Search properties in PDF, Office, audio/video | Off |
+| **Search archive contents** | Search inside ZIP and EPUB files | Off |
+| **Binary/hex search** | Search binary files using hex patterns | Off |
 
 ### Metadata Search
 
@@ -215,6 +228,15 @@ Enable **"Search file metadata"** checkbox to search document properties:
 - **JSON**: Keys, structure type, item count
 - **XML**: Root tag, namespaces, attributes
 
+**SQLite Databases (.db, .sqlite, .sqlite3):**
+- Database schema, table names
+- Column names and types
+- Row counts per table
+
+**RTF Files (.rtf):**
+- Title, Author, Subject
+- RTF version, creation date
+
 **Audio Files (.mp3, .flac, .m4a, .ogg, .wma):**
 - Artist, Album, Title, Genre, Year
 - Duration, Bitrate, Sample rate
@@ -224,6 +246,24 @@ Enable **"Search file metadata"** checkbox to search document properties:
 - Duration, Bitrate, Video codec
 
 **Note:** When metadata search is enabled, the tool searches ONLY metadata, not file contents. Disable to search file text content.
+
+### Archive Content Search
+
+Enable **"Search archive contents"** to search inside ZIP and EPUB files:
+
+- Searches text files within archives without extracting
+- Results show the full path: `archive.zip/folder/file.txt:line_number`
+- Supports nested directory structures
+- Works with both .zip and .epub formats
+
+### Binary/Hex Search
+
+Enable **"Binary/hex search"** to search binary files using hexadecimal patterns:
+
+- Enter hex patterns like `48656C6C6F` to search for "Hello" in binary files
+- Results display byte offsets and hex dumps
+- Shows 16 bytes before and after each match (32-byte context window)
+- Useful for firmware analysis, executables, and binary data inspection
 
 ### Navigation & Workflow
 
@@ -244,6 +284,7 @@ Enable **"Search file metadata"** checkbox to search document properties:
 | `Ctrl+Up` | Previous match |
 | `Ctrl+Down` | Next match |
 | `Ctrl+Q` | Quit application |
+| `F1` | Open help window |
 
 ### Preferences
 
@@ -268,8 +309,8 @@ advanced_search/
 │   ├── chevron_up.svg  # Up arrow icon
 │   └── chevron_down.svg # Down arrow icon
 ├── src/                 # Source code
-│   ├── main.py         # Main application & GUI (2,024 lines)
-│   ├── search_engine.py # Core search functionality (830 lines)
+│   ├── main.py         # Main application & GUI (2,057 lines)
+│   ├── search_engine.py # Core search functionality (827 lines)
 │   └── __pycache__/    # Python bytecode cache
 ├── main.py             # Application entry point
 ├── requirements.txt    # Python dependencies
@@ -290,22 +331,26 @@ advanced_search/
 ### Key Components
 
 **MainWindow Class** (`src/main.py`)
-- Three-panel UI layout
-- File browser with lazy loading
-- Results tree with match grouping
+- Three-panel UI layout with compact controls
+- File browser with lazy loading and drive labels
+- Results tree with match grouping and sorting
 - Preview pane with syntax highlighting
-- Regex pattern menu system
+- Regex pattern menu system with custom pattern editor
 - Metadata preview formatting
 - Search history management
 - Preferences dialog
+- Multi-modal Search/Stop button
 
 **SearchEngine Class** (`src/search_engine.py`)
 - Multi-threaded file scanning
 - Regex pattern compilation and caching
 - Image metadata extraction (EXIF, GPS, PNG)
-- File metadata extraction (PDF, Office, audio/video)
+- File metadata extraction (PDF, Office, audio/video, SQLite, RTF)
+- Archive content search (ZIP, EPUB)
+- Binary/hex pattern search
 - Context line extraction
 - File filtering and exclusion patterns
+- Network drive optimization with timeout handling
 - Performance optimizations (file size limits, caching)
 
 ## 🛠️ Development
@@ -335,6 +380,7 @@ The application uses a clean separation of concerns:
 - **Worker Thread Pattern** - QThread for background search operations
 - **Lazy Loading** - File browser loads directories on-demand
 - **LRU Cache** - File content caching with size limits
+- **Multi-modal UI** - Single button for Search/Stop with state tracking
 
 ### Adding New Features
 
@@ -361,54 +407,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🔮 Roadmap
-
-**Potential Future Features:**
-- [ ] Linux and macOS support
-- [x] Custom regex pattern library (save your own patterns) - ✅ **Completed in v0.5.0**
-- [x] Search inside archive files without extraction - ✅ **Completed in v0.5.0**
-- [x] Binary file content search (hex mode) - ✅ **Completed in v0.5.0**
-- [x] Network drive search optimization - ✅ **Completed in v0.5.0**
-- [x] SQLite database content search - ✅ **Completed in v0.5.0**
-- [x] RTF (Rich Text Format) support - ✅ **Completed in v0.5.0**
-
-## � Changelog
-
-### v0.5.0-alpha (Latest)
-**Major Feature Release**
-
-New Features:
-- ✏️ **Custom Regex Pattern Library** - Create, save, and manage your own regex patterns with persistent storage
-- 📦 **Archive Content Search** - Search inside ZIP and EPUB files without manual extraction
-- 🔢 **Binary/Hex Search Mode** - Search binary files using hex patterns with offset display
-- 🗄️ **SQLite Database Search** - Extract schema, table names, column info, and row counts from SQLite databases
-- 📄 **RTF File Support** - Extract metadata from Rich Text Format documents
-- 🌐 **Network Drive Optimization** - Automatic UNC path detection with timeout handling and accessibility caching
-
-Improvements:
-- Enhanced help documentation with 6-tab comprehensive guide
-- Added support for .db, .sqlite, .sqlite3, and .rtf file formats
-- Improved performance for network drive operations
-- Added custom pattern editor with validation
-
-### v0.4.0-alpha
-**Sorting & Organization Update**
-
-New Features:
-- 📊 **Result Sorting** - Sort results by path, match count, file size, or modification date (8 options)
-- 📚 **Comprehensive Help System** - 6-tab help window (Overview, Search Options, Regex, Shortcuts, Context Menus, Tips)
-- 🎬 **Screenwriting Format Support** - Added Final Draft (.fdx), Fountain (.fountain), and Celtx (.celtx)
-- 📦 **Archive Metadata** - Extract file lists and metadata from ZIP archives
-- 📖 **eBook Support** - EPUB metadata extraction (title, author, publisher)
-- 📊 **Structured Data** - CSV, JSON, and XML metadata extraction
-- 📝 **OpenDocument Support** - LibreOffice/OpenOffice formats (.odt, .ods, .odp)
-
-Improvements:
-- Expanded metadata search to 20+ file formats
-- Updated UI with F1 help shortcut
-- Enhanced documentation
-
-## �👤 Author
+## 👤 Author
 
 **Randy Northrup**
 
@@ -427,10 +426,11 @@ If you encounter any issues or have suggestions, please [open an issue](../../is
 
 ## ⚠️ Known Limitations
 
-- **Windows only** - Currently designed for Windows (paths, file handling)
+- **Windows only** - Currently designed for Windows (paths, file handling, drive labels)
 - **Text encoding** - Files must be text-readable or supported binary formats (images, PDFs, Office docs)
 - **Large files** - Very large files (>50MB default) are skipped to prevent slowdown
 - **Metadata availability** - Not all files contain metadata; results vary by file type and creation method
+- **Network drives** - Network path timeout set to 5 seconds; inaccessible drives are cached
 
 ## 📊 Performance Tips
 
@@ -439,6 +439,7 @@ If you encounter any issues or have suggestions, please [open an issue](../../is
 3. **Enable metadata search selectively** - Only when needed, as it adds processing overhead
 4. **Clear cache periodically** - If experiencing memory issues with large file sets
 5. **Use specific regex patterns** - More specific patterns search faster than broad ones
+6. **Network drives** - First access may be slow due to accessibility checks; subsequent searches use caching
 
 ---
 

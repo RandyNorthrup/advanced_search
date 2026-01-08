@@ -354,7 +354,7 @@ class SearchEngine:
                         if isinstance(value, bytes):
                             try:
                                 value = value.decode('utf-8', errors='ignore')
-                            except:
+                            except Exception:
                                 value = str(value)
                         metadata[tag_name] = str(value)
         except (AttributeError, KeyError, TypeError):
@@ -478,7 +478,7 @@ class SearchEngine:
                                         metadata['Publisher'] = elem.text[:200] if elem.text else ''
                                     for elem in root.findall('.//dc:language', ns):
                                         metadata['Language'] = elem.text if elem.text else ''
-                                except:
+                                except Exception Exception:
                                     pass
                             break
             
@@ -507,7 +507,7 @@ class SearchEngine:
                                 metadata['Keys'] += f' ... ({len(data)} total)'
                         elif isinstance(data, list):
                             metadata['Items'] = str(len(data))
-                    except:
+                    except Exception:
                         metadata['Type'] = 'Invalid JSON'
                         
             elif file_ext == '.xml' and XML_AVAILABLE:
@@ -541,7 +541,7 @@ class SearchEngine:
                                     metadata['Subject'] = elem.text[:200] if elem.text else ''
                                 for elem in root.findall('.//meta:keyword', ns):
                                     metadata['Keywords'] = elem.text[:200] if elem.text else ''
-                            except:
+                            except Exception:
                                 pass
             
             # PDF files
@@ -749,7 +749,7 @@ class SearchEngine:
                         context_after=[]
                     )
                     matches.append(search_match)
-            except:
+            except Exception:
                 pass
             
         except Exception:
@@ -776,7 +776,7 @@ class SearchEngine:
                 accessible = future.result(timeout=self.network_timeout)
                 self._network_path_cache[path] = accessible
                 return accessible
-        except:
+        except Exception:
             # If timeout or error, assume not accessible
             self._network_path_cache[path] = False
             return False
